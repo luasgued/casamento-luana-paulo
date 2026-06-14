@@ -3,3 +3,6 @@
 _assets/
 _template.html
 _app.jsx
+
+# dev local (preview)
+.claude/

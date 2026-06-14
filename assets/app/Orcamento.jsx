@@ -178,8 +178,11 @@ function AbaPrevisto({ linhas, setStatus, onEdit, onDelete, onReorder, onAdd, to
             return (
               <div key={c.id} className={"orc2-row" + (drag.over === c.id ? " drag-over" : "")} {...drag.targetProps(c.id)}>
                 <span className="orc-cat">
-                  <span className="orc-cat-name">{c.nome}</span>
-                  <span className="orc-cat-sub">{c.fornecedor || "sem fornecedor definido"}</span>
+                  <DragHandle {...drag.handleProps(c.id)} />
+                  <span className="orc-cat-text">
+                    <span className="orc-cat-name">{c.nome}</span>
+                    <span className="orc-cat-sub">{c.fornecedor || "sem fornecedor definido"}</span>
+                  </span>
                 </span>
                 <span>
                   <select className={"status-select tone-" + m.tone} value={c.status} onChange={(e) => setStatus(c.id, e.target.value)}>
@@ -192,7 +195,6 @@ function AbaPrevisto({ linhas, setStatus, onEdit, onDelete, onReorder, onAdd, to
                   {c.realizado ? (saldo < 0 ? "−" : "+") + brl(Math.abs(saldo)) : <span className="dash">—</span>}
                 </span>
                 <span className="orc-actions">
-                  <DragHandle {...drag.handleProps(c.id)} />
                   <RowActions onEdit={() => onEdit({ ...c })} onDelete={() => onDelete(c.id)} />
                 </span>
               </div>);
@@ -218,7 +220,7 @@ function AbaPrevisto({ linhas, setStatus, onEdit, onDelete, onReorder, onAdd, to
 // ---- Aba 2: Orçamento Final (fluxo mensal) -----------------------------
 function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
   const fechados = linhas.filter((c) => c.status === "contratado");
-  const meses = mesesAte(WEDDING.data, 2026, 0); // a partir de jan/2026 até o mês do casamento
+  const meses = mesesAte(WEDDING.data, 2026, 2); // a partir de mar/2026 até o mês do casamento
   const [cell, setCell] = React.useState(null); // {id, mes}
   const [val, setVal] = React.useState("");
 
@@ -274,14 +276,16 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
               {fechados.map((c, i) =>
             <tr key={c.id} className={drag.over === c.id ? "drag-over" : ""} {...drag.targetProps(c.id)}>
                   <td className="cash-item sticky-l">
-                    <span className="cash-cat">
-                      <span className="cash-name">{c.nome}</span>
-                      <span className="cash-forn-sub">{c.fornecedor || "sem fornecedor definido"}</span>
+                    <span className="cash-item-inner">
+                      <DragHandle {...drag.handleProps(c.id)} />
+                      <span className="cash-cat">
+                        <span className="cash-name">{c.nome}</span>
+                        <span className="cash-forn-sub">{c.fornecedor || "sem fornecedor definido"}</span>
+                      </span>
                     </span>
                   </td>
                   <td className="cash-total num serif">{brl(totalItem(c))}</td>
                   <td className="cash-acts">
-                    <DragHandle {...drag.handleProps(c.id)} />
                     <RowActions onEdit={() => onEditItem({ ...c })} onDelete={() => onDelete(c.id)} />
                   </td>
                   {meses.map((m) => {

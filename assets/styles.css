@@ -717,24 +717,19 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 .sf-logout{ margin-top:10px; width:100%; padding:8px 12px; background:none; border:1px solid rgba(0,0,0,0.12); border-radius:9px; font:600 12px 'Hanken Grotesk',system-ui,sans-serif; color:#8a8a8a; cursor:pointer; transition:all .15s; }
 .sf-logout:hover{ color:#c02a3c; border-color:rgba(192,42,60,0.4); }
 
-/* ===== Botões de reordenar (mover ▲▼) ===== */
-.reorder-btns{ display:inline-flex; gap:3px; align-items:center; }
-.reorder-btns.vertical{ flex-direction:column; gap:2px; }
-.reorder-btn{
-  border:1px solid rgba(0,0,0,0.14); background:#fff; border-radius:6px;
-  width:22px; height:18px; padding:0; font-size:8px; line-height:1; color:#8a8a8a;
-  cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
-  transition:all .12s; flex:none;
-}
-.reorder-btn:hover:not(:disabled){ color:#1b47a4; border-color:#1b47a4; }
-.reorder-btn:disabled{ opacity:.28; cursor:default; }
+/* ===== Arrastar para reordenar (drag-and-drop) ===== */
+.drag-handle{ display:inline-flex; align-items:center; justify-content:center; color:#bdbdbd; cursor:grab; padding:2px 3px; border-radius:5px; flex:none; -webkit-user-select:none; user-select:none; }
+.drag-handle:hover{ color:#1b47a4; background:rgba(27,71,164,0.07); }
+.drag-handle:active{ cursor:grabbing; }
+.drag-over{ outline:2px dashed #1b47a4; outline-offset:-2px; background:rgba(27,71,164,0.05) !important; }
+.vendor-card{ transition:outline .1s, background .1s; }
 
-/* garante que as células de ação acomodem os botões lado a lado */
+/* células de ação acomodam a alça + os ícones */
 .orc-actions, .cash-acts{ display:flex; align-items:center; gap:6px; justify-content:flex-end; }
 
-/* serviço com botões de mover na frente do campo */
+/* serviço com alça de arrastar na frente do campo */
 .servico-row{ display:flex; align-items:center; gap:8px; }
-.servico-row .reorder-btns{ flex:none; }
+.servico-row .drag-handle{ flex:none; }
 .servico-row .f-input{ flex:1; }
 
 /* campo "novo grupo": input + botão de voltar à lista */

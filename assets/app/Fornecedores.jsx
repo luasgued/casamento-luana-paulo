@@ -153,16 +153,9 @@ function Fornecedores() {
 
   const removerVendor = (id) => { setVendors((vs) => vs.filter((v) => v.id !== id)); setForm(null); };
 
-  // reordena os cards dentro da categoria (troca posição na lista compartilhada)
-  const moverVendor = (id, dir) => setVendors((vs) => {
-    const i = todos.findIndex((f) => f.id === id), j = i + dir;
-    if (i < 0 || j < 0 || j >= todos.length) return vs;
-    const arr = [...vs];
-    const ia = arr.findIndex((v) => v.id === todos[i].id);
-    const ib = arr.findIndex((v) => v.id === todos[j].id);
-    [arr[ia], arr[ib]] = [arr[ib], arr[ia]];
-    return arr;
-  });
+  // reordena os cards por arrastar (move na lista compartilhada)
+  const reordenarVendor = (fromId, toId) => setVendors((vs) => reorderList(vs, fromId, toId));
+  const dragV = useDragSort(reordenarVendor);
 
   const catNome = (id) => (cats.find((c) => c.id === id) || {}).nome || "—";
 
@@ -207,7 +200,7 @@ function Fornecedores() {
           {/* vendor cards */}
           <div className="vendor-grid">
             {todos.map((f, i) => (
-              <Card key={f.id} className={"vendor-card" + (f.status === "descartado" ? " dim" : "")}>
+              <Card key={f.id} className={"vendor-card" + (f.status === "descartado" ? " dim" : "") + (dragV.over === f.id ? " drag-over" : "")} {...dragV.targetProps(f.id)}>
                 <div className="vc-head">
                   <div>
                     <div className="vc-name serif">{f.nome}</div>
@@ -228,7 +221,7 @@ function Fornecedores() {
                 {f.notas && <div className="vc-notas">{f.notas}</div>}
                 <div className="vc-foot">
                   <div className="vc-foot-btns">
-                    <ReorderButtons onUp={() => moverVendor(f.id, -1)} onDown={() => moverVendor(f.id, 1)} upDisabled={i === 0} downDisabled={i === todos.length - 1} />
+                    <DragHandle {...dragV.handleProps(f.id)} />
                     <button className="mini-btn" onClick={() => setOpenPdf(f)}>Proposta (PDF)</button>
                     <button className="mini-btn" onClick={() => openEdit(f)}>Editar</button>
                   </div>
@@ -395,11 +388,7 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
   const addServico = () => set("servicos", [...d.servicos, ""]);
   const updServico = (i, v) => set("servicos", d.servicos.map((s, j) => j === i ? v : s));
   const delServico = (i) => set("servicos", d.servicos.filter((_, j) => j !== i));
-  const moveServico = (i, dir) => {
-    const j = i + dir;
-    if (j < 0 || j >= d.servicos.length) return;
-    const arr = [...d.servicos];[arr[i], arr[j]] = [arr[j], arr[i]];set("servicos", arr);
-  };
+  const dragS = useDragSort((from, to) => set("servicos", reorderIndex(d.servicos, from, to)));
 
   const podeSalvar = d.nome.trim() && d.categoria;
 
@@ -481,8 +470,8 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
             <label>Serviços inclusos {det("servicos") ? <span className="det">detectado</span> : null}</label>
             <div className="servicos-edit">
               {d.servicos.map((s, i) => (
-                <div key={i} className="servico-row">
-                  <ReorderButtons vertical onUp={() => moveServico(i, -1)} onDown={() => moveServico(i, 1)} upDisabled={i === 0} downDisabled={i === d.servicos.length - 1} />
+                <div key={i} className={"servico-row" + (dragS.over === i ? " drag-over" : "")} {...dragS.targetProps(i)}>
+                  <DragHandle {...dragS.handleProps(i)} />
                   <input className="f-input" value={s} onChange={(e) => updServico(i, e.target.value)} placeholder="Descreva um item incluso" />
                   <button className="srv-del" onClick={() => delServico(i)}>✕</button>
                 </div>

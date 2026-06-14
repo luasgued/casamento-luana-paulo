@@ -111,15 +111,63 @@ function Donut({ segments, size = 160, stroke = 18, centerLabel, centerSub }) {
   );
 }
 
-// ---- reordenação (mover para cima/baixo) — funciona em celular e desktop ----
-function ReorderButtons({ onUp, onDown, upDisabled, downDisabled, vertical, stopPropagation }) {
-  const wrap = (fn) => (e) => { if (stopPropagation) e.stopPropagation(); fn && fn(); };
+// ---- reordenação por arrastar (drag-and-drop) ----------------------------
+// Alça de arrastar (ponto de pega). Os handlers de drag são passados via props.
+function DragHandle(props) {
   return (
-    <span className={"reorder-btns" + (vertical ? " vertical" : "")}>
-      <button type="button" className="reorder-btn" title="Mover para cima" disabled={upDisabled} onClick={wrap(onUp)}>▲</button>
-      <button type="button" className="reorder-btn" title="Mover para baixo" disabled={downDisabled} onClick={wrap(onDown)}>▼</button>
+    <span className="drag-handle" title="Arraste para reordenar" {...props}>
+      <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true">
+        <circle cx="3.5" cy="3" r="1.3" /><circle cx="8.5" cy="3" r="1.3" />
+        <circle cx="3.5" cy="8" r="1.3" /><circle cx="8.5" cy="8" r="1.3" />
+        <circle cx="3.5" cy="13" r="1.3" /><circle cx="8.5" cy="13" r="1.3" />
+      </svg>
     </span>
   );
 }
 
-Object.assign(window, { brl, brlShort, Card, SectionTitle, Stat, Progress, Badge, Stars, Avatar, Donut, STATUS_MAP, ReorderButtons });
+// Move o item com id `fromId` para a posição do item `toId` (insere antes dele).
+function reorderList(arr, fromId, toId) {
+  if (fromId == null || fromId === toId) return arr;
+  const a = arr.slice();
+  const fi = a.findIndex((x) => x.id === fromId);
+  if (fi < 0) return arr;
+  const [moved] = a.splice(fi, 1);
+  const ti = a.findIndex((x) => x.id === toId);
+  if (ti < 0) return arr;
+  a.splice(ti, 0, moved);
+  return a;
+}
+
+// Reordena por índice (para listas de strings, ex.: serviços).
+function reorderIndex(arr, from, to) {
+  if (from === to || from == null) return arr;
+  const a = arr.slice();
+  const [m] = a.splice(from, 1);
+  a.splice(to, 0, m);
+  return a;
+}
+
+// Hook que fornece os handlers de drag para a fonte (alça) e o alvo (linha/card).
+// onReorder(de, para) recebe a chave (id ou índice) arrastada e a de destino.
+function useDragSort(onReorder) {
+  const dragKey = React.useRef(null);
+  const [over, setOver] = React.useState(null);
+  return {
+    over,
+    handleProps: (key) => ({
+      draggable: true,
+      onDragStart: (e) => {
+        dragKey.current = key;
+        if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", String(key)); } catch (_) {} }
+      },
+      onDragEnd: () => { dragKey.current = null; setOver(null); },
+    }),
+    targetProps: (key) => ({
+      onDragOver: (e) => { e.preventDefault(); if (dragKey.current != null && over !== key) setOver(key); },
+      onDragLeave: (e) => { if (e.currentTarget === e.target && over === key) setOver(null); },
+      onDrop: (e) => { e.preventDefault(); if (dragKey.current != null) onReorder(dragKey.current, key); dragKey.current = null; setOver(null); },
+    }),
+  };
+}
+
+Object.assign(window, { brl, brlShort, Card, SectionTitle, Stat, Progress, Badge, Stars, Avatar, Donut, STATUS_MAP, DragHandle, reorderList, reorderIndex, useDragSort });

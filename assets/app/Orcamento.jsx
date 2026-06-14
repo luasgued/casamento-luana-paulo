@@ -83,12 +83,8 @@ function Orcamento() {
     setEdit(null);
   };
   const remover = (id) => {setLinhas((ls) => ls.filter((c) => c.id !== id));setEdit(null);};
-  // reordena a linha na lista mestre (reflete nas duas abas)
-  const mover = (id, dir) => setLinhas((ls) => {
-    const i = ls.findIndex((c) => c.id === id), j = i + dir;
-    if (i < 0 || j < 0 || j >= ls.length) return ls;
-    const arr = [...ls];[arr[i], arr[j]] = [arr[j], arr[i]];return arr;
-  });
+  // reordena a linha na lista mestre por arrastar (reflete nas duas abas)
+  const reordenar = (fromId, toId) => setLinhas((ls) => reorderList(ls, fromId, toId));
 
   return (
     <div className="screen">
@@ -149,7 +145,7 @@ function Orcamento() {
       </div>
 
       {aba === "previsto" ?
-      <AbaPrevisto linhas={linhas} setStatus={setStatus} onEdit={setEdit} onDelete={remover} onMove={mover} onAdd={() => setEdit(novoItem())} totalPrev={totalPrev} totalReal={totalReal} diff={diff} /> :
+      <AbaPrevisto linhas={linhas} setStatus={setStatus} onEdit={setEdit} onDelete={remover} onReorder={reordenar} onAdd={() => setEdit(novoItem())} totalPrev={totalPrev} totalReal={totalReal} diff={diff} /> :
       <AbaFinal linhas={linhas} setLinhas={setLinhas} onEditItem={setEdit} onDelete={remover} onAdd={() => setEdit({ ...novoItem(), status: "contratado" })} />}
 
       {edit && <ItemCard draft={edit} onCancel={() => setEdit(null)} onSave={salvar} onRemove={remover} />}
@@ -158,7 +154,8 @@ function Orcamento() {
 }
 
 // ---- Aba 1: Previsto × Realizado ---------------------------------------
-function AbaPrevisto({ linhas, setStatus, onEdit, onDelete, onMove, onAdd, totalPrev, totalReal, diff }) {
+function AbaPrevisto({ linhas, setStatus, onEdit, onDelete, onReorder, onAdd, totalPrev, totalReal, diff }) {
+  const drag = useDragSort(onReorder);
   return (
     <Card className="pad">
       <div className="orc-bar">
@@ -179,7 +176,7 @@ function AbaPrevisto({ linhas, setStatus, onEdit, onDelete, onMove, onAdd, total
             const saldo = (+c.previsto || 0) - (+c.realizado || 0);
             const m = STATUS_MAP[c.status] || { tone: "muted" };
             return (
-              <div key={c.id} className="orc2-row">
+              <div key={c.id} className={"orc2-row" + (drag.over === c.id ? " drag-over" : "")} {...drag.targetProps(c.id)}>
                 <span className="orc-cat">
                   <span className="orc-cat-name">{c.nome}</span>
                   <span className="orc-cat-sub">{c.fornecedor || "sem fornecedor definido"}</span>
@@ -195,7 +192,7 @@ function AbaPrevisto({ linhas, setStatus, onEdit, onDelete, onMove, onAdd, total
                   {c.realizado ? (saldo < 0 ? "−" : "+") + brl(Math.abs(saldo)) : <span className="dash">—</span>}
                 </span>
                 <span className="orc-actions">
-                  <ReorderButtons vertical onUp={() => onMove(c.id, -1)} onDown={() => onMove(c.id, 1)} upDisabled={i === 0} downDisabled={i === linhas.length - 1} />
+                  <DragHandle {...drag.handleProps(c.id)} />
                   <RowActions onEdit={() => onEdit({ ...c })} onDelete={() => onDelete(c.id)} />
                 </span>
               </div>);
@@ -242,17 +239,9 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
     setCell(null);setVal("");
   };
 
-  // reordena entre os itens contratados (troca posição na lista mestre)
-  const moverFechado = (id, dir) => setLinhas((ls) => {
-    const fech = ls.filter((c) => c.status === "contratado");
-    const fi = fech.findIndex((c) => c.id === id), tj = fi + dir;
-    if (fi < 0 || tj < 0 || tj >= fech.length) return ls;
-    const arr = [...ls];
-    const ia = arr.findIndex((c) => c.id === fech[fi].id);
-    const ib = arr.findIndex((c) => c.id === fech[tj].id);
-    [arr[ia], arr[ib]] = [arr[ib], arr[ia]];
-    return arr;
-  });
+  // reordena entre os itens contratados por arrastar (move na lista mestre)
+  const reordenarFechado = (fromId, toId) => setLinhas((ls) => reorderList(ls, fromId, toId));
+  const drag = useDragSort(reordenarFechado);
 
   // ano agrupado para cabeçalho
   const anos = [];
@@ -283,7 +272,7 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
             </thead>
             <tbody>
               {fechados.map((c, i) =>
-            <tr key={c.id}>
+            <tr key={c.id} className={drag.over === c.id ? "drag-over" : ""} {...drag.targetProps(c.id)}>
                   <td className="cash-item sticky-l">
                     <span className="cash-cat">
                       <span className="cash-name">{c.nome}</span>
@@ -292,7 +281,7 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
                   </td>
                   <td className="cash-total num serif">{brl(totalItem(c))}</td>
                   <td className="cash-acts">
-                    <ReorderButtons vertical onUp={() => moverFechado(c.id, -1)} onDown={() => moverFechado(c.id, 1)} upDisabled={i === 0} downDisabled={i === fechados.length - 1} />
+                    <DragHandle {...drag.handleProps(c.id)} />
                     <RowActions onEdit={() => onEditItem({ ...c })} onDelete={() => onDelete(c.id)} />
                   </td>
                   {meses.map((m) => {

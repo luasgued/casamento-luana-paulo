@@ -111,4 +111,15 @@ function Donut({ segments, size = 160, stroke = 18, centerLabel, centerSub }) {
   );
 }
 
-Object.assign(window, { brl, brlShort, Card, SectionTitle, Stat, Progress, Badge, Stars, Avatar, Donut, STATUS_MAP });
+// ---- reordenação (mover para cima/baixo) — funciona em celular e desktop ----
+function ReorderButtons({ onUp, onDown, upDisabled, downDisabled, vertical, stopPropagation }) {
+  const wrap = (fn) => (e) => { if (stopPropagation) e.stopPropagation(); fn && fn(); };
+  return (
+    <span className={"reorder-btns" + (vertical ? " vertical" : "")}>
+      <button type="button" className="reorder-btn" title="Mover para cima" disabled={upDisabled} onClick={wrap(onUp)}>▲</button>
+      <button type="button" className="reorder-btn" title="Mover para baixo" disabled={downDisabled} onClick={wrap(onDown)}>▼</button>
+    </span>
+  );
+}
+
+Object.assign(window, { brl, brlShort, Card, SectionTitle, Stat, Progress, Badge, Stars, Avatar, Donut, STATUS_MAP, ReorderButtons });

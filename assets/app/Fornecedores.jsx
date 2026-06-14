@@ -153,6 +153,17 @@ function Fornecedores() {
 
   const removerVendor = (id) => { setVendors((vs) => vs.filter((v) => v.id !== id)); setForm(null); };
 
+  // reordena os cards dentro da categoria (troca posição na lista compartilhada)
+  const moverVendor = (id, dir) => setVendors((vs) => {
+    const i = todos.findIndex((f) => f.id === id), j = i + dir;
+    if (i < 0 || j < 0 || j >= todos.length) return vs;
+    const arr = [...vs];
+    const ia = arr.findIndex((v) => v.id === todos[i].id);
+    const ib = arr.findIndex((v) => v.id === todos[j].id);
+    [arr[ia], arr[ib]] = [arr[ib], arr[ia]];
+    return arr;
+  });
+
   const catNome = (id) => (cats.find((c) => c.id === id) || {}).nome || "—";
 
   return (
@@ -195,7 +206,7 @@ function Fornecedores() {
         <React.Fragment>
           {/* vendor cards */}
           <div className="vendor-grid">
-            {todos.map((f) => (
+            {todos.map((f, i) => (
               <Card key={f.id} className={"vendor-card" + (f.status === "descartado" ? " dim" : "")}>
                 <div className="vc-head">
                   <div>
@@ -217,6 +228,7 @@ function Fornecedores() {
                 {f.notas && <div className="vc-notas">{f.notas}</div>}
                 <div className="vc-foot">
                   <div className="vc-foot-btns">
+                    <ReorderButtons onUp={() => moverVendor(f.id, -1)} onDown={() => moverVendor(f.id, 1)} upDisabled={i === 0} downDisabled={i === todos.length - 1} />
                     <button className="mini-btn" onClick={() => setOpenPdf(f)}>Proposta (PDF)</button>
                     <button className="mini-btn" onClick={() => openEdit(f)}>Editar</button>
                   </div>
@@ -383,6 +395,11 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
   const addServico = () => set("servicos", [...d.servicos, ""]);
   const updServico = (i, v) => set("servicos", d.servicos.map((s, j) => j === i ? v : s));
   const delServico = (i) => set("servicos", d.servicos.filter((_, j) => j !== i));
+  const moveServico = (i, dir) => {
+    const j = i + dir;
+    if (j < 0 || j >= d.servicos.length) return;
+    const arr = [...d.servicos];[arr[i], arr[j]] = [arr[j], arr[i]];set("servicos", arr);
+  };
 
   const podeSalvar = d.nome.trim() && d.categoria;
 
@@ -465,6 +482,7 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
             <div className="servicos-edit">
               {d.servicos.map((s, i) => (
                 <div key={i} className="servico-row">
+                  <ReorderButtons vertical onUp={() => moveServico(i, -1)} onDown={() => moveServico(i, 1)} upDisabled={i === 0} downDisabled={i === d.servicos.length - 1} />
                   <input className="f-input" value={s} onChange={(e) => updServico(i, e.target.value)} placeholder="Descreva um item incluso" />
                   <button className="srv-del" onClick={() => delServico(i)}>✕</button>
                 </div>

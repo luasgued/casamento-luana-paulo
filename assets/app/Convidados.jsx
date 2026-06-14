@@ -1,5 +1,7 @@
 // Convidados.jsx — lista de convidados editável
-const GRUPOS_BASE = Array.from(new Set(CONVIDADOS.map((g) => g.grupo)));
+// classificações padrão + as que já existem nos dados semente
+const GRUPOS_PADRAO = ["Família", "Amigos", "Trabalho", "Padrinhos"];
+const GRUPOS_BASE = Array.from(new Set([...GRUPOS_PADRAO, ...CONVIDADOS.map((g) => g.grupo)]));
 
 const EMPTY_GUEST = () => ({
   id: null, nome: "", lado: "Luana", idade: 30, grupo: GRUPOS_BASE[0] || "Família",
@@ -16,6 +18,8 @@ function Convidados() {
   const POR_PAGINA = 15;
 
   const grupos = ["todos", ...Array.from(new Set(lista.map((g) => g.grupo)))];
+  // grupos disponíveis no formulário: padrão + os já usados pelos convidados
+  const gruposForm = Array.from(new Set([...GRUPOS_BASE, ...lista.map((g) => g.grupo)].filter(Boolean)));
 
   const totalLuana = lista.filter((g) => g.lado === "Luana").length;
   const totalPaulo = lista.filter((g) => g.lado === "Paulo").length;
@@ -143,7 +147,7 @@ function Convidados() {
         </div>
       </Card>
 
-      {form && <GuestForm draft={form} grupos={GRUPOS_BASE} onCancel={() => setForm(null)} onSave={salvar} onRemove={remover} />}
+      {form && <GuestForm draft={form} grupos={gruposForm} onCancel={() => setForm(null)} onSave={salvar} onRemove={remover} />}
     </div>
   );
 }
@@ -152,6 +156,10 @@ function GuestForm({ draft, grupos, onCancel, onSave, onRemove }) {
   const [d, setD] = React.useState(draft);
   const set = (k, v) => setD((p) => ({ ...p, [k]: v }));
   const podeSalvar = d.nome.trim();
+  // opções do seletor de grupo = lista recebida + o grupo atual (se for custom)
+  const opcoesGrupo = Array.from(new Set([...grupos, ...(d.grupo ? [d.grupo] : [])].filter(Boolean)));
+  // começa no modo "novo grupo" se o convidado não tem grupo definido
+  const [novoGrupo, setNovoGrupo] = React.useState(!d.grupo);
   return (
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal form-modal" onClick={(e) => e.stopPropagation()}>
@@ -178,8 +186,22 @@ function GuestForm({ draft, grupos, onCancel, onSave, onRemove }) {
             </div>
             <div className="field">
               <label>Grupo</label>
-              <input className="f-input" list="grupos-list" value={d.grupo} onChange={(e) => set("grupo", e.target.value)} placeholder="Ex: Família" />
-              <datalist id="grupos-list">{grupos.map((g) => <option key={g} value={g} />)}</datalist>
+              {novoGrupo ? (
+                <div className="grupo-novo">
+                  <input className="f-input" autoFocus value={d.grupo} onChange={(e) => set("grupo", e.target.value)} placeholder="Nome do novo grupo (ex: Faculdade)" />
+                  {opcoesGrupo.length > 0 && (
+                    <button type="button" className="mini-btn" onClick={() => { setNovoGrupo(false); if (!opcoesGrupo.includes(d.grupo)) set("grupo", opcoesGrupo[0]); }}>Escolher da lista</button>
+                  )}
+                </div>
+              ) : (
+                <select className="f-input" value={d.grupo} onChange={(e) => {
+                  if (e.target.value === "__novo__") { setNovoGrupo(true); set("grupo", ""); }
+                  else set("grupo", e.target.value);
+                }}>
+                  {opcoesGrupo.map((g) => <option key={g} value={g}>{g}</option>)}
+                  <option value="__novo__">+ Adicionar novo grupo…</option>
+                </select>
+              )}
             </div>
           </div>
           <div className="field">

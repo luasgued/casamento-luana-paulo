@@ -716,3 +716,28 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 /* botão Sair na barra lateral */
 .sf-logout{ margin-top:10px; width:100%; padding:8px 12px; background:none; border:1px solid rgba(0,0,0,0.12); border-radius:9px; font:600 12px 'Hanken Grotesk',system-ui,sans-serif; color:#8a8a8a; cursor:pointer; transition:all .15s; }
 .sf-logout:hover{ color:#c02a3c; border-color:rgba(192,42,60,0.4); }
+
+/* ===== Botões de reordenar (mover ▲▼) ===== */
+.reorder-btns{ display:inline-flex; gap:3px; align-items:center; }
+.reorder-btns.vertical{ flex-direction:column; gap:2px; }
+.reorder-btn{
+  border:1px solid rgba(0,0,0,0.14); background:#fff; border-radius:6px;
+  width:22px; height:18px; padding:0; font-size:8px; line-height:1; color:#8a8a8a;
+  cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+  transition:all .12s; flex:none;
+}
+.reorder-btn:hover:not(:disabled){ color:#1b47a4; border-color:#1b47a4; }
+.reorder-btn:disabled{ opacity:.28; cursor:default; }
+
+/* garante que as células de ação acomodem os botões lado a lado */
+.orc-actions, .cash-acts{ display:flex; align-items:center; gap:6px; justify-content:flex-end; }
+
+/* serviço com botões de mover na frente do campo */
+.servico-row{ display:flex; align-items:center; gap:8px; }
+.servico-row .reorder-btns{ flex:none; }
+.servico-row .f-input{ flex:1; }
+
+/* campo "novo grupo": input + botão de voltar à lista */
+.grupo-novo{ display:flex; gap:8px; align-items:center; }
+.grupo-novo .f-input{ flex:1; }
+.grupo-novo .mini-btn{ white-space:nowrap; flex:none; }

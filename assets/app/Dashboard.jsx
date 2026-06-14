@@ -16,22 +16,29 @@ function useCountdown(dateStr) {
 
 function Dashboard({ go, tasks }) {
   const { dias, meses } = useCountdown(WEDDING.data);
-  const totalPrev = ORCAMENTO.reduce((s, c) => s + c.previsto, 0);
-  const totalReal = ORCAMENTO.reduce((s, c) => s + c.realizado, 0);
-  const pendente = ORCAMENTO.filter((c) => c.realizado === 0).reduce((s, c) => s + c.previsto, 0);
-  const semForn = ORCAMENTO.filter((c) => c.realizado === 0).length;
+  // Dados do banco compartilhado — refletem em tempo real o que é
+  // editado/apagado nas telas de Orçamento, Convidados e Fornecedores.
+  const [ORC] = useStore("orcamento", ORCAMENTO);
+  const [GUESTS] = useStore("convidados", CONVIDADOS);
+  const [VENDORS] = useStore("fornecedores", FORNECEDORES);
+  const [CATS] = useStore("categorias", CATEGORIAS);
+
+  const totalPrev = ORC.reduce((s, c) => s + c.previsto, 0);
+  const totalReal = ORC.reduce((s, c) => s + c.realizado, 0);
+  const pendente = ORC.filter((c) => c.realizado === 0).reduce((s, c) => s + c.previsto, 0);
+  const semForn = ORC.filter((c) => c.realizado === 0).length;
 
   const HOJE_D = new Date("2026-06-12");
   const MESES_PT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
   const mesKey = HOJE_D.getUTCFullYear() + "-" + String(HOJE_D.getUTCMonth() + 1).padStart(2, "0");
   const nomeMes = MESES_PT[HOJE_D.getUTCMonth()];
-  const pagamentosMes = ORCAMENTO.filter((c) => (c.pagamentos || {})[mesKey] != null).length;
-  const valorMes = ORCAMENTO.reduce((s, c) => s + (((c.pagamentos || {})[mesKey]) || 0), 0);
+  const pagamentosMes = ORC.filter((c) => (c.pagamentos || {})[mesKey] != null).length;
+  const valorMes = ORC.reduce((s, c) => s + (((c.pagamentos || {})[mesKey]) || 0), 0);
 
-  const conf = CONVIDADOS.filter((g) => g.rsvp === "confirmado");
+  const conf = GUESTS.filter((g) => g.rsvp === "confirmado");
 
-  const contratados = ORCAMENTO.filter((c) => c.fornecedor).length;
-  const decidir = FORNECEDORES.filter((f) => f.status === "favorito" || f.status === "analise");
+  const contratados = ORC.filter((c) => c.fornecedor).length;
+  const decidir = VENDORS.filter((f) => f.status === "favorito" || f.status === "analise");
 
   const abertas = (tasks || []).filter((t) => t.status !== "done");
   const fazendo = (tasks || []).filter((t) => t.status === "doing");
@@ -75,8 +82,8 @@ function Dashboard({ go, tasks }) {
         </Card>
         <Card className="kpi clickable" onClick={() => go("fornecedores")}>
           <div className="kpi-top"><span className="kpi-label">Fornecedores fechados</span><span className="chev">→</span></div>
-          <div className="kpi-value serif">{contratados}<span className="kpi-of"> / {ORCAMENTO.length}</span></div>
-          <div className="kpi-foot"><Progress value={contratados} max={ORCAMENTO.length} tone="accent" /><span>{decidir.length} em decisão</span></div>
+          <div className="kpi-value serif">{contratados}<span className="kpi-of"> / {ORC.length}</span></div>
+          <div className="kpi-foot"><Progress value={contratados} max={ORC.length} tone="accent" /><span>{decidir.length} em decisão</span></div>
         </Card>
         <Card className="kpi clickable" onClick={() => go("tarefas")}>
           <div className="kpi-top"><span className="kpi-label">Tarefas em aberto</span><span className="chev">→</span></div>
@@ -90,7 +97,7 @@ function Dashboard({ go, tasks }) {
         <Card className="pad">
           <SectionTitle kicker="ORÇAMENTO" title="Onde estamos" action={<button className="link-btn" onClick={() => go("orcamento")}>Detalhar</button>} />
           <div className="budget-overview">
-            <Donut segments={donutSegs} centerLabel={Math.round(totalReal / totalPrev * 100) + "%"} centerSub="comprometido" />
+            <Donut segments={donutSegs} centerLabel={(totalPrev ? Math.round(totalReal / totalPrev * 100) : 0) + "%"} centerSub="comprometido" />
             <div className="budget-legend">
               <div className="leg-row"><span className="dot" style={{ background: "var(--accent)" }} /><div><div className="leg-v serif">{brl(totalReal)}</div><div className="leg-l">Realizado / contratado</div></div></div>
               <div className="leg-row"><span className="dot" style={{ background: "var(--line-strong)" }} /><div><div className="leg-v serif">{brl(totalPrev - totalReal)}</div><div className="leg-l">Ainda a contratar</div></div></div>
@@ -129,7 +136,7 @@ function Dashboard({ go, tasks }) {
         <div className="decision-strip">
           {decidir.map((f) =>
           <div key={f.id} className="decision-card" onClick={() => go("fornecedores")}>
-              <div className="dc-cat">{(CATEGORIAS.find((c) => c.id === f.categoria) || {}).nome}</div>
+              <div className="dc-cat">{(CATS.find((c) => c.id === f.categoria) || {}).nome}</div>
               <div className="dc-name serif">{f.nome}</div>
               <div className="dc-row"><Stars score={f.scores.qualidade} /><span className="dc-price">{brl(f.preco)}</span></div>
               <Badge status={f.status} />

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b47a4">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Casamento · Luana &amp; Paulo</title>
+
+  <!-- favicon L&P, embutido (sem requisição extra) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231b47a4'/%3E%3Ctext x='50' y='62' font-family='Georgia,serif' font-size='34' fill='white' text-anchor='middle'%3EL%26amp;P%3C/text%3E%3C/svg%3E">
+
+  <!-- Fontes (Google Fonts) — substituem os arquivos embutidos do original -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Yeseva+One&display=swap" rel="stylesheet">
+
+  <!-- preconnect aos CDNs para acelerar o primeiro carregamento -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- 1) Configuração (você edita este arquivo) -->
+  <script src="assets/firebase-config.js"></script>
+
+  <!-- 2) Firebase (SDK compat — expõe o global `firebase`) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+  <!-- 3) React (build de produção, leve) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+
+  <!-- 4) pdf.js (leitura das propostas em PDF nos Fornecedores) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
+
+  <!-- 5) Estado compartilhado + autenticação (define window.useStore e window.Wedding) -->
+  <script src="assets/store.js"></script>
+
+  <!-- 6) Babel standalone — transpila o JSX no navegador (sem etapa de build) -->
+  <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
+
+  <!-- 7) App (JSX). A ORDEM importa: data e components antes das telas; App e gate por último. -->
+  <script type="text/babel" src="assets/app/tweaks.jsx"></script>
+  <script type="text/babel" src="assets/app/data.jsx"></script>
+  <script type="text/babel" src="assets/app/components.jsx"></script>
+  <script type="text/babel" src="assets/app/Dashboard.jsx"></script>
+  <script type="text/babel" src="assets/app/Orcamento.jsx"></script>
+  <script type="text/babel" src="assets/app/Fornecedores.jsx"></script>
+  <script type="text/babel" src="assets/app/Tarefas.jsx"></script>
+  <script type="text/babel" src="assets/app/Convidados.jsx"></script>
+  <script type="text/babel" src="assets/app/App.jsx"></script>
+  <script type="text/babel" src="assets/app/gate.jsx"></script>
+</body>
+</html>

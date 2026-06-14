@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+_assets/
+_template.html
+_app.jsx

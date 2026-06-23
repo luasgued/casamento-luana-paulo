@@ -357,11 +357,11 @@ function ItemCard({ draft, onCancel, onSave, onRemove }) {
             </div>
             <div className="field">
               <label>Previsão de gastos</label>
-              <input className="f-input" type="number" value={d.previsto} onChange={(e) => set("previsto", +e.target.value || 0)} placeholder="0" />
+              <input className="f-input" type="number" min="0" value={d.previsto || ""} onChange={(e) => set("previsto", e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" />
             </div>
             <div className="field">
               <label>Gastos reais</label>
-              <input className="f-input" type="number" value={d.realizado} onChange={(e) => set("realizado", +e.target.value || 0)} placeholder="0" />
+              <input className="f-input" type="number" min="0" value={d.realizado || ""} onChange={(e) => set("realizado", e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" />
             </div>
           </div>
 

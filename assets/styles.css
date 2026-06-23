@@ -426,7 +426,7 @@ button{ font-family:inherit; cursor:pointer; }
 .vc-servicos li::before{ content:"✓"; position:absolute; left:0; color:var(--accent); font-size:11px; top:1px; }
 .vc-servicos li.more{ color:var(--muted); }
 .vc-servicos li.more::before{ content:"+"; }
-.vc-notas{ font-size:12.5px; color:var(--muted); font-style:italic; line-height:1.45; }
+.vc-notas{ font-size:12.5px; color:var(--muted); font-style:italic; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; }
 .vc-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:6px; }
 .vc-score{ font-size:12px; color:var(--muted); }
 .vc-score b{ color:var(--ink); font-size:14px; }

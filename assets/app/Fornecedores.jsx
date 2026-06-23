@@ -457,7 +457,7 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
             </div>
             <div className="field">
               <label>Preço {det("preco") ? <span className="det">detectado</span> : null}</label>
-              <input className="f-input" type="number" value={d.preco} onChange={(e) => set("preco", +e.target.value || 0)} placeholder="0" />
+              <input className="f-input" type="number" min="0" value={d.preco || ""} onChange={(e) => set("preco", e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" />
             </div>
             <div className="field">
               <label>Forma de pagamento {det("parcelas") ? <span className="det">detectado</span> : null}</label>

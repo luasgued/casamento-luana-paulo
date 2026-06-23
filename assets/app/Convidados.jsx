@@ -21,16 +21,17 @@ function Convidados() {
   // grupos disponíveis no formulário: padrão + os já usados pelos convidados
   const gruposForm = Array.from(new Set([...GRUPOS_BASE, ...lista.map((g) => g.grupo)].filter(Boolean)));
 
-  const totalLuana = lista.filter((g) => g.lado === "Luana").length;
-  const totalPaulo = lista.filter((g) => g.lado === "Paulo").length;
-  const pctLuana = lista.length ? Math.round((totalLuana / lista.length) * 100) : 0;
-  const pctPaulo = lista.length ? 100 - pctLuana : 0;
-
   const ehCrianca = (g) => g.crianca || (g.idade != null && g.idade < 18);
   const totalCriancas = lista.filter(ehCrianca).length;
   const totalAdultos = lista.length - totalCriancas;
   const pctAdultos = lista.length ? Math.round((totalAdultos / lista.length) * 100) : 0;
   const pctCriancas = lista.length ? 100 - pctAdultos : 0;
+
+  // totalizador e quebra por anfitrião consideram apenas adultos
+  const totalLuana = lista.filter((g) => g.lado === "Luana" && !ehCrianca(g)).length;
+  const totalPaulo = lista.filter((g) => g.lado === "Paulo" && !ehCrianca(g)).length;
+  const pctLuana = totalAdultos ? Math.round((totalLuana / totalAdultos) * 100) : 0;
+  const pctPaulo = totalAdultos ? 100 - pctLuana : 0;
 
   const filtrados = lista.filter((g) => {
     if (busca && !g.nome.toLowerCase().includes(busca.toLowerCase())) return false;
@@ -70,8 +71,8 @@ function Convidados() {
       <div className="orc-summary">
         <Card className="pad orc-sum-card">
           <div className="stat-label">Convidados</div>
-          <div className="orc-big serif">{lista.length}</div>
-          <div className="stat-sub">no total da lista</div>
+          <div className="orc-big serif">{totalAdultos}</div>
+          <div className="stat-sub">adultos na lista{totalCriancas > 0 ? " · " + totalCriancas + " criança(s)" : ""}</div>
         </Card>
         <Card className="pad orc-sum-card">
           <div className="stat-label">Por anfitrião</div>

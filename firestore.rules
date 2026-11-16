@@ -6,6 +6,18 @@ service cloud.firestore {
     match /wedding/{doc} {
       allow read, write: if request.auth != null;
     }
+
+    // Endereços enviados pelos convidados na página pública Save the Date.
+    match /enderecos/{id} {
+      // Qualquer convidado pode ENVIAR (criar), com validação básica anti-abuso.
+      allow create: if request.resource.data.nome is string
+                    && request.resource.data.nome.size() > 0
+                    && request.resource.data.nome.size() <= 180
+                    && request.resource.data.keys().size() <= 12;
+      // Só o casal (logado) consegue ler, editar e excluir os envios.
+      allow read, update, delete: if request.auth != null;
+    }
+
     // Bloqueia qualquer outra coleção por padrão.
     match /{document=**} {
       allow read, write: if false;

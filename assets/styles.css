@@ -739,3 +739,13 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 .grupo-novo{ display:flex; gap:8px; align-items:center; }
 .grupo-novo .f-input{ flex:1; }
 .grupo-novo .mini-btn{ white-space:nowrap; flex:none; }
+
+/* ===== Endereços recebidos (Save the Date) ===== */
+.end-list{ display:flex; flex-direction:column; gap:12px; margin-top:4px; }
+.end-card{ border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:16px 18px; background:#fff; }
+.end-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.end-nome{ font-size:18px; color:var(--ink,#1b1b1b); }
+.end-contato{ font-size:12.5px; color:var(--muted,#8a8a8a); margin-top:2px; }
+.end-addr{ font-size:13.5px; color:var(--ink,#333); line-height:1.5; margin-top:10px; }
+.end-data{ font-size:11.5px; color:var(--muted,#9a9a9a); margin-top:8px; letter-spacing:.02em; }
+.end-card .icon-btn{ flex:none; }

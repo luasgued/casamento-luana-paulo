@@ -104,6 +104,7 @@ async function lerPdf(file) {
 
 const EMPTY_VENDOR = () => ({
   id: null, categoria: "", nome: "", contato: "", instagram: "", status: "analise",
+  responsavel: "", telefone: "", email: "", staff: [], contratos: [],
   preco: 0, parcelas: "", servicos: [], notas: "", proposta: null,
   propostaUrl: null, propostaNome: null,
   scores: { qualidade: 4, atendimento: 4, portfolio: 4, flexibilidade: 4, prazo: 4 },
@@ -159,10 +160,55 @@ function Fornecedores() {
 
   const catNome = (id) => (cats.find((c) => c.id === id) || {}).nome || "—";
 
+  // ---- sub-abas ----
+  const [aba, setAba] = React.useState("contratados");
+  const contratados = vendors.filter((f) => f.status === "contratado");
+
+  // ---- upload de contratos (Firebase Storage) ----
+  const [uploadingId, setUploadingId] = React.useState(null);
+  const [uploadErro, setUploadErro] = React.useState("");
+  const storageDisponivel = () => typeof firebase !== "undefined" && firebase.apps && firebase.apps.length && firebase.storage;
+  const uploadContrato = async (f, file) => {
+    if (!file) return;
+    if (!storageDisponivel()) { setUploadErro("Upload de contratos disponível apenas no modo nuvem (Firebase Storage)."); return; }
+    setUploadingId(f.id); setUploadErro("");
+    try {
+      const ref = firebase.storage().ref("contratos/" + f.id + "/" + Date.now() + "_" + file.name);
+      const snap = await ref.put(file);
+      const url = await snap.ref.getDownloadURL();
+      const ct = { id: "ct" + Date.now(), nome: file.name, url: url, path: ref.fullPath, enviadoEm: Date.now() };
+      setVendors((vs) => vs.map((v) => v.id === f.id ? Object.assign({}, v, { contratos: [...(v.contratos || []), ct] }) : v));
+    } catch (e) {
+      setUploadErro("Falha no upload: " + (e.message || e.code || String(e)));
+    }
+    setUploadingId(null);
+  };
+  const removerContrato = (f, ct) => {
+    if (ct.path && storageDisponivel()) firebase.storage().ref(ct.path).delete().catch(() => {});
+    setVendors((vs) => vs.map((v) => v.id === f.id ? Object.assign({}, v, { contratos: (v.contratos || []).filter((c) => c.id !== ct.id) }) : v));
+  };
+
   return (
     <div className="screen">
-      <SectionTitle kicker="DECISÕES" title="Fornecedores"
-        action={<button className="add-btn" onClick={openAdd}>+ Adicionar fornecedor</button>} />
+      <SectionTitle kicker="FORNECEDORES" title="Fornecedores"
+        action={aba === "cadastro" ? <button className="add-btn" onClick={openAdd}>+ Adicionar fornecedor</button> : null} />
+
+      <div className="orc-tabs">
+        <button className={"orc-tab" + (aba === "contratados" ? " active" : "")} onClick={() => setAba("contratados")}>Contratados{contratados.length ? " (" + contratados.length + ")" : ""}</button>
+        <button className={"orc-tab" + (aba === "cadastro" ? " active" : "")} onClick={() => setAba("cadastro")}>Cadastro e escolha</button>
+        <button className={"orc-tab" + (aba === "contratos" ? " active" : "")} onClick={() => setAba("contratos")}>Contratos</button>
+      </div>
+
+      {aba === "contratados" && (
+        <ForneContratados contratados={contratados} catNome={catNome} onEdit={openEdit} onIrCadastro={() => setAba("cadastro")} />
+      )}
+
+      {aba === "contratos" && (
+        <ForneContratos contratados={contratados} uploadingId={uploadingId} erro={uploadErro} onUpload={uploadContrato} onRemover={removerContrato} onIrCadastro={() => setAba("cadastro")} />
+      )}
+
+      {aba === "cadastro" && (
+      <React.Fragment>
 
       {/* category tabs */}
       <div className="cat-tabs">
@@ -273,6 +319,8 @@ function Fornecedores() {
             </Card>
           )}
         </React.Fragment>
+      )}
+      </React.Fragment>
       )}
 
       {openPdf && <PdfModal f={openPdf} onClose={() => setOpenPdf(null)} onEdit={() => { const f = openPdf; setOpenPdf(null); openEdit(f); }} />}
@@ -390,6 +438,11 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
   const delServico = (i) => set("servicos", d.servicos.filter((_, j) => j !== i));
   const dragS = useDragSort((from, to) => set("servicos", reorderIndex(d.servicos, from, to)));
 
+  const staff = d.staff || [];
+  const addStaff = () => set("staff", [...staff, { id: "st" + Date.now(), nome: "", funcao: "" }]);
+  const updStaff = (i, k, v) => set("staff", staff.map((s, j) => j === i ? Object.assign({}, s, { [k]: v }) : s));
+  const delStaff = (i) => set("staff", staff.filter((_, j) => j !== i));
+
   const podeSalvar = d.nome.trim() && d.categoria;
 
   return (
@@ -445,8 +498,16 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
               <input className="f-input" value={d.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Ex: Estúdio Luz Natural" />
             </div>
             <div className="field">
-              <label>Contato {det("contato") ? <span className="det">detectado</span> : null}</label>
-              <input className="f-input" value={d.contato} onChange={(e) => set("contato", e.target.value)} placeholder="Nome · (11) 9 0000-0000" />
+              <label>Responsável</label>
+              <input className="f-input" value={d.responsavel || ""} onChange={(e) => set("responsavel", e.target.value)} placeholder="Ex: Marina & Téo" />
+            </div>
+            <div className="field">
+              <label>Telefone</label>
+              <input className="f-input" value={d.telefone || ""} onChange={(e) => set("telefone", e.target.value)} placeholder="(11) 9 0000-0000" />
+            </div>
+            <div className="field">
+              <label>E-mail</label>
+              <input className="f-input" type="email" value={d.email || ""} onChange={(e) => set("email", e.target.value)} placeholder="contato@fornecedor.com" />
             </div>
             <div className="field">
               <label>Instagram {det("instagram") ? <span className="det">detectado</span> : null}</label>
@@ -480,6 +541,21 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
             </div>
           </div>
 
+          {/* equipe / staff */}
+          <div className="field">
+            <label>Equipe / staff do fornecedor</label>
+            <div className="staff-edit">
+              {staff.map((s, i) => (
+                <div key={s.id || i} className="staff-row">
+                  <input className="f-input" value={s.nome || ""} onChange={(e) => updStaff(i, "nome", e.target.value)} placeholder="Nome" />
+                  <input className="f-input" value={s.funcao || ""} onChange={(e) => updStaff(i, "funcao", e.target.value)} placeholder="Função (ex: 2º fotógrafo)" />
+                  <button className="srv-del" onClick={() => delStaff(i)}>✕</button>
+                </div>
+              ))}
+              <button className="srv-add" onClick={addStaff}>+ Adicionar pessoa</button>
+            </div>
+          </div>
+
           {/* avaliação */}
           <div className="field">
             <label>Avaliação por critério (sua nota de 1 a 5)</label>
@@ -507,13 +583,99 @@ function VendorForm({ draft, cats, onCancel, onSave, onRemove }) {
           {d.id ? <button className="link-danger" onClick={() => onRemove(d.id)}>Remover</button> : <span></span>}
           <div className="vc-foot-btns">
             <button className="mini-btn" onClick={onCancel}>Cancelar</button>
-            <button className={"add-btn solid" + (podeSalvar ? "" : " disabled")} disabled={!podeSalvar} onClick={() => onSave({ ...d, preco: +d.preco || 0, servicos: d.servicos.filter((s) => s.trim()) })}>
+            <button className={"add-btn solid" + (podeSalvar ? "" : " disabled")} disabled={!podeSalvar} onClick={() => onSave(Object.assign({}, d, {
+              preco: +d.preco || 0,
+              servicos: d.servicos.filter((s) => s.trim()),
+              staff: (d.staff || []).filter((s) => (s.nome || "").trim()),
+              contato: d.telefone ? [d.responsavel, d.telefone].filter(Boolean).join(" · ") : (d.contato || ""),
+            }))}>
               {d.id ? "Salvar alterações" : "Adicionar fornecedor"}
             </button>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// ---- aba "Contratados": visão inicial com dados dos contratados ----
+function ForneContratados({ contratados, catNome, onEdit, onIrCadastro }) {
+  if (contratados.length === 0) return (
+    <Card className="pad empty-cat">
+      <div className="empty-cat-title serif">Nenhum fornecedor contratado ainda</div>
+      <div className="empty-cat-sub">Marque um fornecedor como <b>Contratado</b> na aba "Cadastro e escolha" para vê-lo aqui.</div>
+      <button className="add-btn solid" onClick={onIrCadastro}>Ir para cadastro</button>
+    </Card>
+  );
+  const telefone = (f) => f.telefone || f.contato || "—";
+  return (
+    <div className="vendor-grid">
+      {contratados.map((f) => (
+        <Card key={f.id} className="vendor-card contratado-card" onClick={() => onEdit(f)}>
+          <div className="vc-head">
+            <div>
+              <div className="vc-name serif">{f.nome}</div>
+              <div className="ct-cat">{catNome(f.categoria)}</div>
+            </div>
+            <Badge status="contratado" />
+          </div>
+          <div className="ct-info">
+            <div className="ct-row"><span className="ct-lbl">Responsável</span><span className="ct-val">{f.responsavel || "—"}</span></div>
+            <div className="ct-row"><span className="ct-lbl">Telefone</span><span className="ct-val">{telefone(f)}</span></div>
+            <div className="ct-row"><span className="ct-lbl">E-mail</span><span className="ct-val">{f.email || "—"}</span></div>
+          </div>
+          {f.staff && f.staff.length > 0 && (
+            <div className="ct-staff">
+              <div className="ct-staff-title">Equipe ({f.staff.length})</div>
+              {f.staff.map((s) => <div key={s.id} className="ct-staff-item"><b>{s.nome}</b>{s.funcao ? <span className="ct-staff-fn"> · {s.funcao}</span> : null}</div>)}
+            </div>
+          )}
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ---- aba "Contratos": upload e lista de arquivos por contratado ----
+function ForneContratos({ contratados, uploadingId, erro, onUpload, onRemover, onIrCadastro }) {
+  const fmtData = (ms) => ms ? new Date(ms).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "";
+  if (contratados.length === 0) return (
+    <Card className="pad empty-cat">
+      <div className="empty-cat-title serif">Nenhum fornecedor contratado</div>
+      <div className="empty-cat-sub">Os contratos ficam disponíveis para os fornecedores marcados como contratados.</div>
+      <button className="add-btn solid" onClick={onIrCadastro}>Ir para cadastro</button>
+    </Card>
+  );
+  return (
+    <React.Fragment>
+      {erro && <Card className="pad"><div className="empty">{erro}</div></Card>}
+      <div className="contratos-list">
+        {contratados.map((f) => (
+          <Card key={f.id} className="pad contrato-card">
+            <div className="contrato-head">
+              <div>
+                <div className="contrato-nome serif">{f.nome}</div>
+                <div className="contrato-sub">{(f.contratos || []).length} arquivo(s)</div>
+              </div>
+              <label className="mini-btn solid contrato-upload">
+                {uploadingId === f.id ? "Enviando…" : "+ Enviar contrato"}
+                <input type="file" hidden disabled={uploadingId === f.id} onChange={(e) => { onUpload(f, e.target.files && e.target.files[0]); e.target.value = ""; }} />
+              </label>
+            </div>
+            <div className="contrato-files">
+              {(f.contratos || []).map((ct) => (
+                <div key={ct.id} className="contrato-file">
+                  <a href={ct.url} target="_blank" rel="noopener">📄 {ct.nome}</a>
+                  <span className="contrato-data">{fmtData(ct.enviadoEm)}</span>
+                  <button className="srv-del" title="Remover" onClick={() => onRemover(f, ct)}>✕</button>
+                </div>
+              ))}
+              {(!f.contratos || f.contratos.length === 0) && <div className="contrato-empty">Nenhum contrato enviado ainda.</div>}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </React.Fragment>
   );
 }
 

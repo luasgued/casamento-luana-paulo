@@ -16,12 +16,33 @@ const RSVP_OPCOES = [
   { id: "recusado", label: "Recusou" },
 ];
 
+// ordena por nome (A→Z) mantendo cada subconvidado logo abaixo do seu principal
+function ordenarComVinculos(arr) {
+  const byId = {};
+  arr.forEach((g) => { byId[g.id] = g; });
+  const cmp = (a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" });
+  const subs = {};
+  const principais = [];
+  arr.forEach((g) => {
+    if (g.principalId && byId[g.principalId]) (subs[g.principalId] = subs[g.principalId] || []).push(g);
+    else principais.push(g);
+  });
+  principais.sort(cmp);
+  const out = [];
+  principais.forEach((p) => {
+    out.push(p);
+    (subs[p.id] || []).sort(cmp).forEach((s) => out.push(s));
+  });
+  return out;
+}
+
 function Convidados() {
   const [lista, setLista] = useStore("convidados", CONVIDADOS);
   const [busca, setBusca] = React.useState("");
   const [fLado, setFLado] = React.useState("todos");
   const [fGrupo, setFGrupo] = React.useState("todos");
   const [fStatus, setFStatus] = React.useState("todos");
+  const [ordenar, setOrdenar] = React.useState("padrao");
   const [form, setForm] = React.useState(null);
   const [pagina, setPagina] = React.useState(1);
   const POR_PAGINA = 15;
@@ -135,11 +156,12 @@ function Convidados() {
     return true;
   });
 
-  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
-  React.useEffect(() => { setPagina(1); }, [busca, fLado, fGrupo, fStatus]);
+  const listaExibida = ordenar === "alfabetica" ? ordenarComVinculos(filtrados) : filtrados;
+  const totalPaginas = Math.max(1, Math.ceil(listaExibida.length / POR_PAGINA));
+  React.useEffect(() => { setPagina(1); }, [busca, fLado, fGrupo, fStatus, ordenar]);
   const paginaAtual = Math.min(pagina, totalPaginas);
   const inicio = (paginaAtual - 1) * POR_PAGINA;
-  const paginados = filtrados.slice(inicio, inicio + POR_PAGINA);
+  const paginados = listaExibida.slice(inicio, inicio + POR_PAGINA);
 
   const openAdd = () => setForm(EMPTY_GUEST());
   const openEdit = (g) => setForm({ ...g });
@@ -156,6 +178,8 @@ function Convidados() {
     setLista((ls) => ls.filter((g) => g.id !== id));
     setForm(null);
   };
+  // edição rápida direto na tabela (checkboxes de status)
+  const atualizar = (id, patch) => setLista((ls) => ls.map((g) => g.id === id ? Object.assign({}, g, patch) : g));
 
   return (
     <div className="screen">
@@ -246,41 +270,55 @@ function Convidados() {
             <option value="rsvp-confirmado">RSVP confirmado</option>
             <option value="rsvp-pendente">RSVP não confirmado</option>
           </select>
+          <button className={"sort-toggle" + (ordenar === "alfabetica" ? " on" : "")}
+            onClick={() => setOrdenar(ordenar === "alfabetica" ? "padrao" : "alfabetica")}
+            title="Ordenar por nome (subconvidados ficam abaixo do principal)">
+            ⇅ A→Z
+          </button>
         </div>
 
         {/* guest table */}
-        <div className="guest-table guest-table-v2">
+        <div className="guest-table guest-table-v3">
           <div className="guest-head">
             <span>Convidado</span>
             <span>Lado</span>
             <span>Grupo</span>
-            <span>Status</span>
+            <span className="col-chk">Save the Date</span>
+            <span className="col-chk">Convite</span>
+            <span className="col-chk">RSVP</span>
             <span></span>
           </div>
-          {paginados.map((g) => (
-            <div key={g.id} className="guest-row">
+          {paginados.map((g) => {
+            const ehSub = g.principalId && nomePorId[g.principalId];
+            return (
+            <div key={g.id} className={"guest-row" + (ehSub ? " guest-sub-row" : "")}>
               <span className="guest-name">
                 <Avatar name={g.nome} lado={g.lado} />
                 <span className="guest-name-txt">
                   <span className="guest-name-main">{g.nome}</span>
                   <span className="guest-name-sub">
                     {(g.crianca || (g.idade != null && g.idade < 18)) ? "Criança" : "Adulto"}
-                    {g.principalId && nomePorId[g.principalId] ? <span className="guest-sub-link"> · ↳ {nomePorId[g.principalId]}</span> : null}
+                    {ehSub ? <span className="guest-sub-link"> · ↳ {nomePorId[g.principalId]}</span> : null}
                   </span>
                 </span>
               </span>
               <span className="muted-cell">{g.lado}</span>
               <span className="muted-cell">{g.grupo}</span>
-              <span className="guest-status">
-                <span className={"st-chip" + (g.saveTheDateEnviado ? " on" : "")} title={g.saveTheDateEnviado ? "Save the Date enviado" : "Save the Date pendente"}>SD</span>
-                <span className={"st-chip" + (g.conviteEnviado ? " on" : "")} title={g.conviteEnviado ? "Convite enviado" : "Convite pendente"}>Convite</span>
-                <span className={"st-chip rsvp-" + (g.rsvp || "pendente")} title={"RSVP: " + (g.rsvp || "pendente")}>RSVP</span>
+              <span className="guest-check">
+                <label title="Save the Date enviado"><input type="checkbox" checked={!!g.saveTheDateEnviado} onChange={(e) => atualizar(g.id, { saveTheDateEnviado: e.target.checked })} /><span className="chk-lbl">Save the Date</span></label>
+              </span>
+              <span className="guest-check">
+                <label title="Convite enviado"><input type="checkbox" checked={!!g.conviteEnviado} onChange={(e) => atualizar(g.id, { conviteEnviado: e.target.checked })} /><span className="chk-lbl">Convite</span></label>
+              </span>
+              <span className="guest-check">
+                <label title="RSVP confirmado"><input type="checkbox" checked={g.rsvp === "confirmado"} onChange={(e) => atualizar(g.id, { rsvp: e.target.checked ? "confirmado" : "pendente" })} /><span className={"chk-lbl" + (g.rsvp === "recusado" ? " recusou" : "")}>{g.rsvp === "recusado" ? "RSVP (recusou)" : "RSVP"}</span></label>
               </span>
               <span className="guest-actions">
                 <RowActions onEdit={() => openEdit(g)} onDelete={() => remover(g.id)} />
               </span>
             </div>
-          ))}
+            );
+          })}
           {filtrados.length === 0 && <div className="empty">Nenhum convidado com esses filtros.</div>}
         </div>
         <div className="guest-pager">

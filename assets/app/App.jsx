@@ -9,10 +9,11 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 const NAV = [
 { id: "dashboard", label: "Visão Geral", icon: "home" },
-{ id: "orcamento", label: "Orçamento", icon: "budget" },
-{ id: "fornecedores", label: "Fornecedores", icon: "vendors" },
+{ id: "cronograma", label: "Cronograma", icon: "calendar" },
 { id: "tarefas", label: "Tarefas", icon: "tasks" },
-{ id: "convidados", label: "Convidados", icon: "guests" }];
+{ id: "convidados", label: "Convidados", icon: "guests" },
+{ id: "orcamento", label: "Orçamento", icon: "budget" },
+{ id: "fornecedores", label: "Fornecedores", icon: "vendors" }];
 
 
 function NavIcon({ type, active }) {
@@ -22,6 +23,7 @@ function NavIcon({ type, active }) {
   if (type === "vendors") return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3.5" y="3.5" width="5.5" height="5.5" rx="1" stroke={s} strokeWidth="1.4" /><rect x="11" y="3.5" width="5.5" height="5.5" rx="1" stroke={s} strokeWidth="1.4" /><rect x="3.5" y="11" width="5.5" height="5.5" rx="1" stroke={s} strokeWidth="1.4" /><rect x="11" y="11" width="5.5" height="5.5" rx="1" stroke={s} strokeWidth="1.4" /></svg>;
   if (type === "tasks") return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3.5" width="4.2" height="13" rx="1" stroke={s} strokeWidth="1.4" /><rect x="9.4" y="3.5" width="4.2" height="9" rx="1" stroke={s} strokeWidth="1.4" /><rect x="15.8" y="3.5" width="1.2" height="6" rx="0.6" stroke={s} strokeWidth="1.4" /></svg>;
   if (type === "mail") return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="4.5" width="15" height="11" rx="1.5" stroke={s} strokeWidth="1.4" /><path d="M3 5.5l7 5 7-5" stroke={s} strokeWidth="1.4" strokeLinejoin="round" /></svg>;
+  if (type === "calendar") return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4.5" width="14" height="12.5" rx="1.6" stroke={s} strokeWidth="1.4" /><path d="M3 8h14M7 3v3M13 3v3" stroke={s} strokeWidth="1.4" strokeLinecap="round" /></svg>;
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="7.5" r="2.6" stroke={s} strokeWidth="1.4" /><circle cx="13.5" cy="8.5" r="2" stroke={s} strokeWidth="1.4" /><path d="M3 16c.4-2.2 2-3.4 4-3.4s3.6 1.2 4 3.4M12 16c.2-1.6 1.2-2.6 2.6-2.6 1.2 0 2.2.8 2.6 2.2" stroke={s} strokeWidth="1.3" strokeLinecap="round" /></svg>;
 }
 
@@ -70,6 +72,7 @@ function App() {
       {/* Main */}
       <main className="main">
         {screen === "dashboard" && <Dashboard go={go} tasks={tasks} />}
+        {screen === "cronograma" && <Cronograma />}
         {screen === "orcamento" && <Orcamento />}
         {screen === "fornecedores" && <Fornecedores />}
         {screen === "tarefas" && <Tarefas tasks={tasks} setTasks={setTasks} />}

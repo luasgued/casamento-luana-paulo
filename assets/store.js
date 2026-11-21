@@ -29,7 +29,7 @@
   var LS_DATA = "casamento.estado";
   var LS_AUTH = "casamento.local-auth";
   var DOC_PATH = { col: "wedding", id: "state" };
-  var STORE_KEYS = ["tarefas", "convidados", "orcamento", "fornecedores", "categorias"];
+  var STORE_KEYS = ["tarefas", "convidados", "orcamento", "fornecedores", "categorias", "cronograma"];
 
   // ---- estado em memória + assinantes (React) ---------------------------
   var STATE = {};
@@ -53,6 +53,7 @@
       orcamento: window.ORCAMENTO,
       fornecedores: window.FORNECEDORES,
       categorias: window.CATEGORIAS,
+      cronograma: [],
     };
   }
 

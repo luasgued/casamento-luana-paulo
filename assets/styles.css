@@ -805,3 +805,13 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 .end-picker-item:hover{ background:var(--accent-soft,rgba(27,71,164,0.1)); }
 .end-picker-empty{ font-size:12.5px; color:var(--muted,#8a8a8a); padding:8px; }
 .end-picker-actions{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; }
+
+/* ===== Combobox de convidado principal (busca por nome) ===== */
+.combo-wrap{ position:relative; }
+.combo-list{ margin-top:6px; background:var(--surface,#fff); border:1px solid var(--line-strong,rgba(0,0,0,0.15)); border-radius:10px; padding:5px; max-height:230px; overflow-y:auto; box-shadow:0 6px 18px rgba(0,0,0,0.07); }
+.combo-item{ display:block; width:100%; text-align:left; padding:9px 11px; border:none; background:none; border-radius:7px; font-size:14px; color:var(--ink,#222); cursor:pointer; }
+.combo-item:hover{ background:var(--accent-soft,rgba(27,71,164,0.1)); }
+.combo-empty{ padding:10px 11px; font-size:13px; color:var(--muted,#8a8a8a); }
+.combo-selected{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.combo-chip{ font-size:14px; font-weight:600; color:var(--accent,#1b47a4); background:var(--accent-soft,rgba(27,71,164,0.1)); padding:8px 14px; border-radius:9px; }
+.field-hint{ font-size:11.5px; color:var(--muted,#8a8a8a); margin-top:6px; }

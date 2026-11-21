@@ -301,6 +301,15 @@ function GuestForm({ draft, grupos, convidados, onCancel, onSave, onRemove }) {
   const podeSalvar = d.nome.trim();
   // candidatos a "convidado principal" (todos, menos ele mesmo)
   const principais = (convidados || []).filter((c) => c.id && c.id !== d.id);
+  // busca do seletor de convidado principal
+  const [buscaPrinc, setBuscaPrinc] = React.useState("");
+  const [principalAberto, setPrincipalAberto] = React.useState(false);
+  const principalNome = d.principalId ? (principais.find((c) => c.id === d.principalId) || {}).nome || "convidado" : "";
+  const principaisFiltrados = () => {
+    const q = buscaPrinc.trim().toLowerCase();
+    const arr = q ? principais.filter((c) => (c.nome || "").toLowerCase().includes(q)) : principais;
+    return arr.slice(0, 8);
+  };
   // opções do seletor de grupo = lista recebida + o grupo atual (se for custom)
   const opcoesGrupo = Array.from(new Set([...grupos, ...(d.grupo ? [d.grupo] : [])].filter(Boolean)));
   // começa no modo "novo grupo" se o convidado não tem grupo definido
@@ -374,10 +383,28 @@ function GuestForm({ draft, grupos, convidados, onCancel, onSave, onRemove }) {
           </div>
           <div className="field">
             <label>Convidado principal (atrelar a outro convidado)</label>
-            <select className="f-input" value={d.principalId || ""} onChange={(e) => set("principalId", e.target.value || null)}>
-              <option value="">— Nenhum (é um convidado principal) —</option>
-              {principais.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
-            </select>
+            {d.principalId ? (
+              <div className="combo-selected">
+                <span className="combo-chip">↳ {principalNome}</span>
+                <button type="button" className="mini-btn" onClick={() => { set("principalId", null); setBuscaPrinc(""); setPrincipalAberto(false); }}>Remover vínculo</button>
+              </div>
+            ) : (
+              <div className="combo-wrap">
+                <input className="f-input" placeholder="Buscar convidado pelo nome…" value={buscaPrinc}
+                  onFocus={() => setPrincipalAberto(true)}
+                  onChange={(e) => { setBuscaPrinc(e.target.value); setPrincipalAberto(true); }}
+                  onBlur={() => setTimeout(() => setPrincipalAberto(false), 150)} />
+                {principalAberto && (
+                  <div className="combo-list">
+                    {principaisFiltrados().map((c) => (
+                      <button type="button" key={c.id} className="combo-item" onMouseDown={() => { set("principalId", c.id); setPrincipalAberto(false); setBuscaPrinc(""); }}>{c.nome}</button>
+                    ))}
+                    {principaisFiltrados().length === 0 && <div className="combo-empty">Nenhum convidado encontrado.</div>}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="field-hint">Deixe em branco se for um convidado principal (sem vínculo).</div>
           </div>
 
           <div className="form-sep">Acompanhamento</div>

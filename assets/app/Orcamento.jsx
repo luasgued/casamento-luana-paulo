@@ -126,10 +126,10 @@ function Orcamento() {
           <div className="stat-sub">verba definida para o casamento</div>
         </Card>
         <Card className="pad orc-sum-card">
-          <div className="stat-label">Realizado × Previsto</div>
-          <div className="orc-big serif">{brl(totalReal)}<span className="orc-of"> / {brl(totalPrev)}</span></div>
-          <div className="orc-prevbar"><div className="orc-prevbar-fill" style={{ width: Math.min(100, totalPrev ? totalReal / totalPrev * 100 : 0) + "%" }} /></div>
-          <div className="stat-sub">{totalPrev ? Math.round(totalReal / totalPrev * 100) : 0}% do previsto já realizado</div>
+          <div className="stat-label">Real × Orçamento</div>
+          <div className="orc-big serif">{brl(totalReal)}<span className="orc-of"> / {brl(tetoTotal)}</span></div>
+          <div className="orc-prevbar"><div className="orc-prevbar-fill" style={{ width: Math.min(100, tetoTotal ? totalReal / tetoTotal * 100 : 0) + "%" }} /></div>
+          <div className="stat-sub">{tetoTotal ? Math.round(totalReal / tetoTotal * 100) : 0}% do orçamento já gasto</div>
         </Card>
         <Card className={"pad orc-sum-card highlight " + (saldoTeto >= 0 ? "tone-good" : "tone-off")}>
           <div className="stat-label">{saldoTeto >= 0 ? "Saldo disponível" : "Acima do teto"}</div>

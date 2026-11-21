@@ -35,7 +35,20 @@ function Dashboard({ go, tasks }) {
   const pagamentosMes = ORC.filter((c) => (c.pagamentos || {})[mesKey] != null).length;
   const valorMes = ORC.reduce((s, c) => s + (((c.pagamentos || {})[mesKey]) || 0), 0);
 
-  const conf = GUESTS.filter((g) => g.rsvp === "confirmado");
+  // ---- convidados ----
+  const ehCriancaG = (g) => g.crianca || (g.idade != null && g.idade < 18);
+  const ehNoivoOuPadrinho = (g) => {
+    const grp = (g.grupo || "").toLowerCase().trim();
+    return grp === "padrinhos" || grp === "padrinho" || grp === "noivos" || grp === "noivo" || grp === "noiva" || grp === "casal";
+  };
+  const totalConv = GUESTS.length;
+  const criancas = GUESTS.filter(ehCriancaG).length;
+  const adultos = totalConv - criancas;
+  const principais = GUESTS.filter((g) => !g.principalId && !ehNoivoOuPadrinho(g)).length;
+  const sdEnviados = GUESTS.filter((g) => g.saveTheDateEnviado).length;
+  const convEnviados = GUESTS.filter((g) => g.conviteEnviado).length;
+  const rsvpConfirmados = GUESTS.filter((g) => g.rsvp === "confirmado").length;
+  const rsvpRecusados = GUESTS.filter((g) => g.rsvp === "recusado").length;
 
   const contratados = ORC.filter((c) => c.fornecedor).length;
   const decidir = VENDORS.filter((f) => f.status === "favorito" || f.status === "analise");
@@ -74,7 +87,7 @@ function Dashboard({ go, tasks }) {
       </div>
 
       {/* KPI row — gestão em primeiro plano */}
-      <div className="kpi-grid kpi-3">
+      <div className="kpi-grid">
         <Card className="kpi clickable" onClick={() => go("orcamento")}>
           <div className="kpi-top"><span className="kpi-label">Orçamento previsto</span><span className="chev">→</span></div>
           <div className="kpi-value serif">{brl(totalPrev)}</div>
@@ -89,6 +102,11 @@ function Dashboard({ go, tasks }) {
           <div className="kpi-top"><span className="kpi-label">Tarefas em aberto</span><span className="chev">→</span></div>
           <div className="kpi-value serif">{abertas.length}<span className="kpi-of"> / {(tasks || []).length}</span></div>
           <div className="kpi-foot"><Progress value={(tasks || []).length - abertas.length} max={(tasks || []).length} tone="good" /><span>{atrasadas.length > 0 ? atrasadas.length + " atrasada(s)" : fazendo.length + " em andamento"}</span></div>
+        </Card>
+        <Card className="kpi clickable" onClick={() => go("convidados")}>
+          <div className="kpi-top"><span className="kpi-label">Convidados</span><span className="chev">→</span></div>
+          <div className="kpi-value serif">{totalConv}</div>
+          <div className="kpi-foot"><Progress value={rsvpConfirmados} max={totalConv} tone="good" /><span>{rsvpConfirmados} confirmaram o RSVP</span></div>
         </Card>
       </div>
 
@@ -129,6 +147,36 @@ function Dashboard({ go, tasks }) {
           </ul>
         </Card>
       </div>
+
+      {/* convidados */}
+      <Card className="pad">
+        <SectionTitle kicker="CONVIDADOS" title="Lista e confirmações" action={<button className="link-btn" onClick={() => go("convidados")}>Ver lista</button>} />
+        <div className="dash-conv">
+          <div className="dash-conv-tiles">
+            <div className="dct"><div className="dct-n serif">{totalConv}</div><div className="dct-l">convidados</div></div>
+            <div className="dct"><div className="dct-n serif">{principais}</div><div className="dct-l">principais</div></div>
+            <div className="dct"><div className="dct-n serif">{adultos}</div><div className="dct-l">adultos</div></div>
+            <div className="dct"><div className="dct-n serif">{criancas}</div><div className="dct-l">crianças</div></div>
+          </div>
+          <div className="dash-conv-bars">
+            <div className="dcb">
+              <div className="dcb-top"><span className="dcb-lbl">Save the Date</span><span className="dcb-cnt">{sdEnviados}<span className="dcb-of">/{totalConv}</span></span></div>
+              <Progress value={sdEnviados} max={totalConv} tone="accent" />
+              <div className="dcb-sub">enviados</div>
+            </div>
+            <div className="dcb">
+              <div className="dcb-top"><span className="dcb-lbl">Convites</span><span className="dcb-cnt">{convEnviados}<span className="dcb-of">/{totalConv}</span></span></div>
+              <Progress value={convEnviados} max={totalConv} tone="ink" />
+              <div className="dcb-sub">enviados</div>
+            </div>
+            <div className="dcb">
+              <div className="dcb-top"><span className="dcb-lbl">RSVP</span><span className="dcb-cnt">{rsvpConfirmados}<span className="dcb-of">/{totalConv}</span></span></div>
+              <Progress value={rsvpConfirmados} max={totalConv} tone="good" />
+              <div className="dcb-sub">confirmados{rsvpRecusados > 0 ? " · " + rsvpRecusados + " recusaram" : ""}</div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* decisions strip */}
       <Card className="pad">

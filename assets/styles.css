@@ -843,3 +843,16 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
   .guest-table-v3 .guest-check .chk-lbl{ display:inline; font-size:13px; color:var(--muted,#8a8a8a); }
   .guest-table-v3 .guest-check label{ gap:9px; }
 }
+
+/* ===== Dashboard: seção de convidados ===== */
+.dash-conv{ display:grid; grid-template-columns:1fr 1.5fr; gap:30px; align-items:center; }
+.dash-conv-tiles{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px 20px; }
+.dct-n{ font-size:30px; line-height:1; color:var(--ink,#1b1b1b); }
+.dct-l{ font-size:11.5px; color:var(--muted,#8a8a8a); margin-top:4px; }
+.dash-conv-bars{ display:flex; flex-direction:column; gap:15px; }
+.dcb-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+.dcb-lbl{ font-size:12.5px; font-weight:600; color:var(--ink,#1b1b1b); }
+.dcb-cnt{ font-size:16px; font-weight:700; color:var(--ink,#1b1b1b); }
+.dcb-of{ font-size:12px; color:var(--muted,#8a8a8a); font-weight:500; }
+.dcb-sub{ font-size:11px; color:var(--muted,#8a8a8a); margin-top:5px; }
+@media (max-width:720px){ .dash-conv{ grid-template-columns:1fr; gap:22px; } }

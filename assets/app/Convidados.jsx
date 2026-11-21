@@ -6,16 +6,33 @@ const GRUPOS_BASE = Array.from(new Set([...GRUPOS_PADRAO, ...CONVIDADOS.map((g) 
 const EMPTY_GUEST = () => ({
   id: null, nome: "", lado: "Luana", idade: 30, grupo: GRUPOS_BASE[0] || "Família",
   acompanhante: false, crianca: false, mesa: null, restricao: "", rsvp: "pendente",
+  email: "", telefone: "", endereco: "", principalId: null,
+  saveTheDateEnviado: false, conviteEnviado: false,
 });
+
+const RSVP_OPCOES = [
+  { id: "pendente", label: "Pendente" },
+  { id: "confirmado", label: "Confirmado" },
+  { id: "recusado", label: "Recusou" },
+];
 
 function Convidados() {
   const [lista, setLista] = useStore("convidados", CONVIDADOS);
   const [busca, setBusca] = React.useState("");
   const [fLado, setFLado] = React.useState("todos");
   const [fGrupo, setFGrupo] = React.useState("todos");
+  const [fStatus, setFStatus] = React.useState("todos");
   const [form, setForm] = React.useState(null);
   const [pagina, setPagina] = React.useState(1);
   const POR_PAGINA = 15;
+
+  // contagens de status (envios e RSVP)
+  const sdEnviados = lista.filter((g) => g.saveTheDateEnviado).length;
+  const convEnviados = lista.filter((g) => g.conviteEnviado).length;
+  const rsvpConfirmados = lista.filter((g) => g.rsvp === "confirmado").length;
+  // nome do convidado principal por id (para mostrar o vínculo)
+  const nomePorId = {};
+  lista.forEach((g) => { nomePorId[g.id] = g.nome; });
 
   const grupos = ["todos", ...Array.from(new Set(lista.map((g) => g.grupo)))];
   // grupos disponíveis no formulário: padrão + os já usados pelos convidados
@@ -33,15 +50,27 @@ function Convidados() {
   const pctLuana = totalAdultos ? Math.round((totalLuana / totalAdultos) * 100) : 0;
   const pctPaulo = totalAdultos ? 100 - pctLuana : 0;
 
+  const passaStatus = (g) => {
+    switch (fStatus) {
+      case "sd-pendente": return !g.saveTheDateEnviado;
+      case "sd-enviado": return !!g.saveTheDateEnviado;
+      case "conv-pendente": return !g.conviteEnviado;
+      case "conv-enviado": return !!g.conviteEnviado;
+      case "rsvp-confirmado": return g.rsvp === "confirmado";
+      case "rsvp-pendente": return g.rsvp !== "confirmado";
+      default: return true;
+    }
+  };
   const filtrados = lista.filter((g) => {
     if (busca && !g.nome.toLowerCase().includes(busca.toLowerCase())) return false;
     if (fLado !== "todos" && g.lado !== fLado) return false;
     if (fGrupo !== "todos" && g.grupo !== fGrupo) return false;
+    if (!passaStatus(g)) return false;
     return true;
   });
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
-  React.useEffect(() => { setPagina(1); }, [busca, fLado, fGrupo]);
+  React.useEffect(() => { setPagina(1); }, [busca, fLado, fGrupo, fStatus]);
   const paginaAtual = Math.min(pagina, totalPaginas);
   const inicio = (paginaAtual - 1) * POR_PAGINA;
   const paginados = filtrados.slice(inicio, inicio + POR_PAGINA);
@@ -98,6 +127,25 @@ function Convidados() {
         </Card>
       </div>
 
+      {/* resumo de envios e confirmações */}
+      <Card className="pad status-summary">
+        <div className="ss-item">
+          <div className="ss-top"><span className="ss-label">Save the Date</span><span className="ss-count">{sdEnviados}<span className="ss-of">/{lista.length}</span></span></div>
+          <div className="ss-bar"><div className="ss-fill tone-sd" style={{ width: (lista.length ? sdEnviados / lista.length * 100 : 0) + "%" }} /></div>
+          <div className="ss-sub">enviados</div>
+        </div>
+        <div className="ss-item">
+          <div className="ss-top"><span className="ss-label">Convites</span><span className="ss-count">{convEnviados}<span className="ss-of">/{lista.length}</span></span></div>
+          <div className="ss-bar"><div className="ss-fill tone-cv" style={{ width: (lista.length ? convEnviados / lista.length * 100 : 0) + "%" }} /></div>
+          <div className="ss-sub">enviados</div>
+        </div>
+        <div className="ss-item">
+          <div className="ss-top"><span className="ss-label">RSVP</span><span className="ss-count">{rsvpConfirmados}<span className="ss-of">/{lista.length}</span></span></div>
+          <div className="ss-bar"><div className="ss-fill tone-rsvp" style={{ width: (lista.length ? rsvpConfirmados / lista.length * 100 : 0) + "%" }} /></div>
+          <div className="ss-sub">confirmados</div>
+        </div>
+      </Card>
+
       {/* filters */}
       <Card className="pad">
         <div className="guest-toolbar">
@@ -108,23 +156,45 @@ function Convidados() {
           <select className="select" value={fGrupo} onChange={(e) => setFGrupo(e.target.value)}>
             {grupos.map((g) => <option key={g} value={g}>{g === "todos" ? "Todos os grupos" : g}</option>)}
           </select>
+          <select className="select" value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
+            <option value="todos">Todos os status</option>
+            <option value="sd-pendente">Save the Date pendente</option>
+            <option value="sd-enviado">Save the Date enviado</option>
+            <option value="conv-pendente">Convite pendente</option>
+            <option value="conv-enviado">Convite enviado</option>
+            <option value="rsvp-confirmado">RSVP confirmado</option>
+            <option value="rsvp-pendente">RSVP não confirmado</option>
+          </select>
         </div>
 
         {/* guest table */}
-        <div className="guest-table">
+        <div className="guest-table guest-table-v2">
           <div className="guest-head">
             <span>Convidado</span>
             <span>Lado</span>
-            <span>Tipo</span>
             <span>Grupo</span>
+            <span>Status</span>
             <span></span>
           </div>
           {paginados.map((g) => (
             <div key={g.id} className="guest-row">
-              <span className="guest-name"><Avatar name={g.nome} lado={g.lado} />{g.nome}</span>
+              <span className="guest-name">
+                <Avatar name={g.nome} lado={g.lado} />
+                <span className="guest-name-txt">
+                  <span className="guest-name-main">{g.nome}</span>
+                  <span className="guest-name-sub">
+                    {(g.crianca || (g.idade != null && g.idade < 18)) ? "Criança" : "Adulto"}
+                    {g.principalId && nomePorId[g.principalId] ? <span className="guest-sub-link"> · ↳ {nomePorId[g.principalId]}</span> : null}
+                  </span>
+                </span>
+              </span>
               <span className="muted-cell">{g.lado}</span>
-              <span className="muted-cell">{(g.crianca || (g.idade != null && g.idade < 18)) ? "Criança" : "Adulto"}</span>
               <span className="muted-cell">{g.grupo}</span>
+              <span className="guest-status">
+                <span className={"st-chip" + (g.saveTheDateEnviado ? " on" : "")} title={g.saveTheDateEnviado ? "Save the Date enviado" : "Save the Date pendente"}>SD</span>
+                <span className={"st-chip" + (g.conviteEnviado ? " on" : "")} title={g.conviteEnviado ? "Convite enviado" : "Convite pendente"}>Convite</span>
+                <span className={"st-chip rsvp-" + (g.rsvp || "pendente")} title={"RSVP: " + (g.rsvp || "pendente")}>RSVP</span>
+              </span>
               <span className="guest-actions">
                 <RowActions onEdit={() => openEdit(g)} onDelete={() => remover(g.id)} />
               </span>
@@ -148,15 +218,17 @@ function Convidados() {
         </div>
       </Card>
 
-      {form && <GuestForm draft={form} grupos={gruposForm} onCancel={() => setForm(null)} onSave={salvar} onRemove={remover} />}
+      {form && <GuestForm draft={form} grupos={gruposForm} convidados={lista} onCancel={() => setForm(null)} onSave={salvar} onRemove={remover} />}
     </div>
   );
 }
 
-function GuestForm({ draft, grupos, onCancel, onSave, onRemove }) {
+function GuestForm({ draft, grupos, convidados, onCancel, onSave, onRemove }) {
   const [d, setD] = React.useState(draft);
   const set = (k, v) => setD((p) => ({ ...p, [k]: v }));
   const podeSalvar = d.nome.trim();
+  // candidatos a "convidado principal" (todos, menos ele mesmo)
+  const principais = (convidados || []).filter((c) => c.id && c.id !== d.id);
   // opções do seletor de grupo = lista recebida + o grupo atual (se for custom)
   const opcoesGrupo = Array.from(new Set([...grupos, ...(d.grupo ? [d.grupo] : [])].filter(Boolean)));
   // começa no modo "novo grupo" se o convidado não tem grupo definido
@@ -212,6 +284,47 @@ function GuestForm({ draft, grupos, onCancel, onSave, onRemove }) {
               <button className={"seg-btn" + (d.crianca ? " on" : "")} onClick={() => set("crianca", true)}>Criança</button>
             </div>
           </div>
+
+          <div className="form-sep">Contato</div>
+          <div className="form-grid">
+            <div className="field">
+              <label>E-mail</label>
+              <input className="f-input" type="email" value={d.email || ""} onChange={(e) => set("email", e.target.value)} placeholder="email@exemplo.com" />
+            </div>
+            <div className="field">
+              <label>Telefone</label>
+              <input className="f-input" value={d.telefone || ""} onChange={(e) => set("telefone", e.target.value)} placeholder="(11) 90000-0000" />
+            </div>
+          </div>
+          <div className="field">
+            <label>Endereço</label>
+            <textarea className="f-input" rows="2" value={d.endereco || ""} onChange={(e) => set("endereco", e.target.value)} placeholder="Rua, número, bairro, cidade/UF, CEP"></textarea>
+          </div>
+          <div className="field">
+            <label>Convidado principal (atrelar a outro convidado)</label>
+            <select className="f-input" value={d.principalId || ""} onChange={(e) => set("principalId", e.target.value || null)}>
+              <option value="">— Nenhum (é um convidado principal) —</option>
+              {principais.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+
+          <div className="form-sep">Acompanhamento</div>
+          <div className="field">
+            <label>RSVP (confirmação de presença)</label>
+            <div className="seg">
+              {RSVP_OPCOES.map((o) => (
+                <button key={o.id} className={"seg-btn" + (d.rsvp === o.id ? " on" : "")} onClick={() => set("rsvp", o.id)}>{o.label}</button>
+              ))}
+            </div>
+          </div>
+          <label className="check-row">
+            <input type="checkbox" checked={!!d.saveTheDateEnviado} onChange={(e) => set("saveTheDateEnviado", e.target.checked)} />
+            <span>Save the Date já enviado</span>
+          </label>
+          <label className="check-row">
+            <input type="checkbox" checked={!!d.conviteEnviado} onChange={(e) => set("conviteEnviado", e.target.checked)} />
+            <span>Convite já enviado</span>
+          </label>
         </div>
 
         <div className="modal-foot">

@@ -749,3 +749,44 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 .end-addr{ font-size:13.5px; color:var(--ink,#333); line-height:1.5; margin-top:10px; }
 .end-data{ font-size:11.5px; color:var(--muted,#9a9a9a); margin-top:8px; letter-spacing:.02em; }
 .end-card .icon-btn{ flex:none; }
+
+/* ===== Convidados: resumo de status, chips e novos campos ===== */
+.status-summary{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+.ss-item{ display:flex; flex-direction:column; gap:7px; }
+.ss-top{ display:flex; justify-content:space-between; align-items:baseline; }
+.ss-label{ font-size:12px; font-weight:600; color:var(--ink,#1b1b1b); }
+.ss-count{ font-size:19px; font-weight:700; color:var(--ink,#1b1b1b); }
+.ss-of{ font-size:12px; color:var(--muted,#8a8a8a); font-weight:500; }
+.ss-bar{ height:6px; border-radius:999px; background:var(--surface-2,rgba(0,0,0,0.06)); overflow:hidden; }
+.ss-fill{ height:100%; border-radius:999px; transition:width .3s ease; }
+.ss-fill.tone-sd{ background:#1b47a4; }
+.ss-fill.tone-cv{ background:#c98510; }
+.ss-fill.tone-rsvp{ background:var(--good,#0a7a28); }
+.ss-sub{ font-size:11px; color:var(--muted,#8a8a8a); }
+
+/* nome + sub-linha (tipo e vínculo de principal) */
+.guest-name-txt{ display:flex; flex-direction:column; gap:1px; min-width:0; }
+.guest-name-main{ font-weight:500; }
+.guest-name-sub{ font-size:11px; color:var(--muted,#8a8a8a); line-height:1.3; }
+.guest-sub-link{ color:var(--accent,#1b47a4); }
+
+/* chips de status na linha */
+.guest-status{ display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+.st-chip{ font-size:10px; font-weight:700; letter-spacing:.02em; padding:3px 8px; border-radius:999px; background:var(--surface-2,rgba(0,0,0,0.06)); color:var(--faint,#b0b0b0); white-space:nowrap; }
+.st-chip.on{ background:var(--good-soft,rgba(10,122,40,0.12)); color:var(--good,#0a7a28); }
+.st-chip.rsvp-confirmado{ background:var(--good-soft,rgba(10,122,40,0.12)); color:var(--good,#0a7a28); }
+.st-chip.rsvp-pendente{ background:rgba(201,133,16,0.15); color:#9c6c08; }
+.st-chip.rsvp-recusado{ background:rgba(214,58,78,0.12); color:var(--off,#c02a3c); }
+
+/* checkboxes do formulário */
+.check-row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:14px; color:var(--ink,#1b1b1b); cursor:pointer; }
+.check-row input{ width:18px; height:18px; accent-color:var(--accent,#1b47a4); cursor:pointer; flex:none; }
+
+/* grade da tabela de convidados (com coluna de status) */
+.guest-table-v2 .guest-head, .guest-table-v2 .guest-row{ grid-template-columns:2.5fr 0.7fr 1.1fr 1.5fr 0.8fr; }
+
+@media (max-width:560px){
+  .status-summary{ grid-template-columns:1fr; gap:14px; }
+  .guest-table-v2 .guest-row{ grid-template-columns:1fr auto; }
+  .guest-table-v2 .guest-status{ grid-column:1; margin-top:4px; }
+}

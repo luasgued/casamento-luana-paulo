@@ -12,8 +12,7 @@ const NAV = [
 { id: "orcamento", label: "Orçamento", icon: "budget" },
 { id: "fornecedores", label: "Fornecedores", icon: "vendors" },
 { id: "tarefas", label: "Tarefas", icon: "tasks" },
-{ id: "convidados", label: "Convidados", icon: "guests" },
-{ id: "enderecos", label: "Endereços", icon: "mail" }];
+{ id: "convidados", label: "Convidados", icon: "guests" }];
 
 
 function NavIcon({ type, active }) {
@@ -75,7 +74,6 @@ function App() {
         {screen === "fornecedores" && <Fornecedores />}
         {screen === "tarefas" && <Tarefas tasks={tasks} setTasks={setTasks} />}
         {screen === "convidados" && <Convidados />}
-        {screen === "enderecos" && <Enderecos />}
       </main>
 
       {/* Bottom nav (mobile) */}

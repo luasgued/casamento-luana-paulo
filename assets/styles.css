@@ -790,3 +790,18 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
   .guest-table-v2 .guest-row{ grid-template-columns:1fr auto; }
   .guest-table-v2 .guest-status{ grid-column:1; margin-top:4px; }
 }
+
+/* ===== Endereços: vincular a convidado ===== */
+.end-foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.end-foot .end-data{ margin-top:0; }
+.end-card.vinculado{ border-color:rgba(10,122,40,0.35); }
+.end-vinc{ display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.end-vinc-badge{ font-size:12px; font-weight:600; color:var(--good,#0a7a28); background:var(--good-soft,rgba(10,122,40,0.12)); padding:4px 10px; border-radius:999px; white-space:nowrap; }
+.vincular-btn{ color:var(--accent,#1b47a4); border-color:rgba(27,71,164,0.35); }
+.end-picker{ width:100%; margin-top:8px; border:1px solid var(--line,rgba(0,0,0,0.1)); border-radius:11px; padding:10px; background:var(--surface-2,#f6f6f4); }
+.end-picker-input{ margin-bottom:8px; }
+.end-picker-list{ display:flex; flex-direction:column; gap:3px; max-height:200px; overflow-y:auto; }
+.end-picker-item{ text-align:left; padding:8px 10px; border:none; background:var(--surface,#fff); border-radius:8px; font-size:13.5px; color:var(--ink,#222); cursor:pointer; }
+.end-picker-item:hover{ background:var(--accent-soft,rgba(27,71,164,0.1)); }
+.end-picker-empty{ font-size:12.5px; color:var(--muted,#8a8a8a); padding:8px; }
+.end-picker-actions{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; }

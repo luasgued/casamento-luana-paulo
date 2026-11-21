@@ -34,6 +34,66 @@ function Convidados() {
   const nomePorId = {};
   lista.forEach((g) => { nomePorId[g.id] = g.nome; });
 
+  // ---- endereços recebidos (via página pública Save the Date) ----
+  const [aba, setAba] = React.useState("convidados");
+  const [enderecos, setEnderecos] = React.useState([]);
+  const [endCarregando, setEndCarregando] = React.useState(true);
+  const [endErro, setEndErro] = React.useState("");
+  React.useEffect(() => {
+    if (typeof firebase === "undefined" || !firebase.apps || !firebase.apps.length) {
+      setEndErro("Os endereços ficam disponíveis apenas no modo nuvem (Firebase)."); setEndCarregando(false); return;
+    }
+    const unsub = firebase.firestore().collection("enderecos").onSnapshot(
+      (snap) => {
+        const arr = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+        arr.sort((a, b) => ((b.criadoEm && b.criadoEm.seconds) || 0) - ((a.criadoEm && a.criadoEm.seconds) || 0));
+        setEnderecos(arr); setEndCarregando(false); setEndErro("");
+      },
+      (e) => { setEndErro(e.message || String(e)); setEndCarregando(false); }
+    );
+    return unsub;
+  }, []);
+
+  // monta um endereço legível a partir dos campos do envio
+  const montarEndereco = (s) => [
+    [s.rua, s.numero].filter(Boolean).join(", "),
+    s.complemento, s.bairro,
+    [s.cidade, s.uf].filter(Boolean).join("/"),
+    s.cep ? "CEP " + s.cep : "",
+  ].filter(Boolean).join(" · ");
+
+  // vincula um envio a um convidado existente (e copia os dados recebidos)
+  const vincularEndereco = (sub, guestId) => {
+    if (typeof firebase !== "undefined" && firebase.apps.length) {
+      firebase.firestore().collection("enderecos").doc(sub.id).update({ convidadoId: guestId }).catch(() => {});
+    }
+    setLista((ls) => ls.map((g) => g.id === guestId ? {
+      ...g,
+      email: sub.email || g.email || "",
+      telefone: sub.telefone || g.telefone || "",
+      endereco: montarEndereco(sub) || g.endereco || "",
+    } : g));
+  };
+  const desvincularEndereco = (sub) => {
+    if (typeof firebase !== "undefined" && firebase.apps.length) {
+      firebase.firestore().collection("enderecos").doc(sub.id).update({ convidadoId: firebase.firestore.FieldValue.delete() }).catch(() => {});
+    }
+  };
+  // cria um novo convidado a partir de um envio e já vincula
+  const criarConvidadoDeEndereco = (sub) => {
+    const id = "g" + Date.now();
+    const novo = Object.assign(EMPTY_GUEST(), { id, nome: sub.nome || "Convidado", email: sub.email || "", telefone: sub.telefone || "", endereco: montarEndereco(sub) });
+    setLista((ls) => [novo, ...ls]);
+    if (typeof firebase !== "undefined" && firebase.apps.length) {
+      firebase.firestore().collection("enderecos").doc(sub.id).update({ convidadoId: id }).catch(() => {});
+    }
+  };
+  const removerEndereco = (id) => {
+    if (typeof firebase !== "undefined" && firebase.apps.length) {
+      firebase.firestore().collection("enderecos").doc(id).delete().catch(() => {});
+    }
+  };
+
   const grupos = ["todos", ...Array.from(new Set(lista.map((g) => g.grupo)))];
   // grupos disponíveis no formulário: padrão + os já usados pelos convidados
   const gruposForm = Array.from(new Set([...GRUPOS_BASE, ...lista.map((g) => g.grupo)].filter(Boolean)));
@@ -94,8 +154,18 @@ function Convidados() {
   return (
     <div className="screen">
       <SectionTitle kicker="CONVIDADOS" title="Lista de convidados"
-        action={<button className="add-btn" onClick={openAdd}>+ Adicionar convidado</button>} />
+        action={aba === "convidados" ? <button className="add-btn" onClick={openAdd}>+ Adicionar convidado</button> : null} />
 
+      <div className="orc-tabs">
+        <button className={"orc-tab" + (aba === "convidados" ? " active" : "")} onClick={() => setAba("convidados")}>Convidados</button>
+        <button className={"orc-tab" + (aba === "enderecos" ? " active" : "")} onClick={() => setAba("enderecos")}>Endereços recebidos{enderecos.length ? " (" + enderecos.length + ")" : ""}</button>
+      </div>
+
+      {aba === "enderecos" ? (
+        <Enderecos enderecos={enderecos} carregando={endCarregando} erro={endErro} convidados={lista}
+          onVincular={vincularEndereco} onDesvincular={desvincularEndereco} onCriar={criarConvidadoDeEndereco} onRemover={removerEndereco} />
+      ) : (
+      <React.Fragment>
       {/* totalizer */}
       <div className="orc-summary">
         <Card className="pad orc-sum-card">
@@ -217,6 +287,8 @@ function Convidados() {
           )}
         </div>
       </Card>
+      </React.Fragment>
+      )}
 
       {form && <GuestForm draft={form} grupos={gruposForm} convidados={lista} onCancel={() => setForm(null)} onSave={salvar} onRemove={remover} />}
     </div>

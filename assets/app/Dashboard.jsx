@@ -22,18 +22,26 @@ function Dashboard({ go, tasks }) {
   const [GUESTS] = useStore("convidados", CONVIDADOS);
   const [VENDORS] = useStore("fornecedores", FORNECEDORES);
   const [CATS] = useStore("categorias", CATEGORIAS);
+  const [CRONO] = useStore("cronograma", []);
 
-  const totalPrev = ORC.reduce((s, c) => s + c.previsto, 0);
-  const totalReal = ORC.reduce((s, c) => s + c.realizado, 0);
-  const pendente = ORC.filter((c) => c.realizado === 0).reduce((s, c) => s + c.previsto, 0);
-  const semForn = ORC.filter((c) => c.realizado === 0).length;
+  const totalPrev = ORC.reduce((s, c) => s + (+c.previsto || 0), 0);
+  const totalReal = ORC.reduce((s, c) => s + (+c.realizado || 0), 0);
+  const tetoTotal = WEDDING.orcamentoTotal;
 
-  const HOJE_D = new Date("2026-06-12");
+  // "hoje" real — tudo que depende do mês vigente se atualiza sozinho a cada mês
+  const HOJE_D = new Date();
   const MESES_PT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const mesKey = HOJE_D.getUTCFullYear() + "-" + String(HOJE_D.getUTCMonth() + 1).padStart(2, "0");
-  const nomeMes = MESES_PT[HOJE_D.getUTCMonth()];
+  const mesKey = HOJE_D.getFullYear() + "-" + String(HOJE_D.getMonth() + 1).padStart(2, "0");
+  const nomeMes = MESES_PT[HOJE_D.getMonth()];
+  const nomeMesCap = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+
+  // pagamentos do mês vigente (aba Orçamento Final · fluxo de pagamento)
   const pagamentosMes = ORC.filter((c) => (c.pagamentos || {})[mesKey] != null).length;
   const valorMes = ORC.reduce((s, c) => s + (((c.pagamentos || {})[mesKey]) || 0), 0);
+
+  // cronograma do mês vigente
+  const cronoMes = CRONO.filter((i) => i.mes === mesKey);
+  const cronoFeitos = cronoMes.filter((i) => i.feito).length;
 
   // ---- convidados ----
   const ehCriancaG = (g) => g.crianca || (g.idade != null && g.idade < 18);
@@ -89,14 +97,14 @@ function Dashboard({ go, tasks }) {
       {/* KPI row — gestão em primeiro plano */}
       <div className="kpi-grid">
         <Card className="kpi clickable" onClick={() => go("orcamento")}>
-          <div className="kpi-top"><span className="kpi-label">Orçamento previsto</span><span className="chev">→</span></div>
-          <div className="kpi-value serif">{brl(totalPrev)}</div>
-          <div className="kpi-foot"><Progress value={totalReal} max={totalPrev} /><span>{brl(totalReal)} já comprometido</span></div>
+          <div className="kpi-top"><span className="kpi-label">Real × Orçamento</span><span className="chev">→</span></div>
+          <div className="kpi-value serif">{brlShort(totalReal)}</div>
+          <div className="kpi-foot"><Progress value={totalReal} max={tetoTotal} tone="accent" /><span>{tetoTotal ? Math.round(totalReal / tetoTotal * 100) : 0}% de {brlShort(tetoTotal)} gasto</span></div>
         </Card>
-        <Card className="kpi clickable" onClick={() => go("fornecedores")}>
-          <div className="kpi-top"><span className="kpi-label">Fornecedores fechados</span><span className="chev">→</span></div>
-          <div className="kpi-value serif">{contratados}<span className="kpi-of"> / {ORC.length}</span></div>
-          <div className="kpi-foot"><Progress value={contratados} max={ORC.length} tone="accent" /><span>{decidir.length} em decisão</span></div>
+        <Card className="kpi clickable" onClick={() => go("orcamento")}>
+          <div className="kpi-top"><span className="kpi-label">Pagamentos de {nomeMesCap}</span><span className="chev">→</span></div>
+          <div className="kpi-value serif">{valorMes > 0 ? brlShort(valorMes) : "—"}</div>
+          <div className="kpi-foot"><span>{pagamentosMes === 0 ? "nenhum pagamento previsto neste mês" : pagamentosMes + (pagamentosMes === 1 ? " pagamento a fazer" : " pagamentos a fazer")}</span></div>
         </Card>
         <Card className="kpi clickable" onClick={() => go("tarefas")}>
           <div className="kpi-top"><span className="kpi-label">Tarefas em aberto</span><span className="chev">→</span></div>
@@ -113,18 +121,32 @@ function Dashboard({ go, tasks }) {
       {/* two column — orçamento + tarefas */}
       <div className="two-col">
         <Card className="pad">
-          <SectionTitle kicker="ORÇAMENTO" title="Onde estamos" action={<button className="link-btn" onClick={() => go("orcamento")}>Detalhar</button>} />
-          <div className="budget-overview">
-            <Donut segments={donutSegs} centerLabel={(totalPrev ? Math.round(totalReal / totalPrev * 100) : 0) + "%"} centerSub="comprometido" />
-            <div className="budget-legend">
-              <div className="leg-row"><span className="dot" style={{ background: "var(--accent)" }} /><div><div className="leg-v serif">{brl(totalReal)}</div><div className="leg-l">Realizado / contratado</div></div></div>
-              <div className="leg-row"><span className="dot" style={{ background: "var(--line-strong)" }} /><div><div className="leg-v serif">{brl(totalPrev - totalReal)}</div><div className="leg-l">Ainda a contratar</div></div></div>
+          <SectionTitle kicker="CRONOGRAMA" title={"Tarefas de " + nomeMesCap} action={<button className="link-btn" onClick={() => go("cronograma")}>Abrir</button>} />
+          {cronoMes.length === 0 ?
+          <div className="crono-empty-dash">
+              <div className="ced-ico">🗓️</div>
+              <div className="ced-txt">Nenhuma tarefa cadastrada para {nomeMes}.</div>
+              <button className="link-btn" onClick={() => go("cronograma")}>Adicionar no cronograma →</button>
+            </div> :
+
+          <div className="crono-dash">
+              <div className="crono-dash-head">
+                <span className="cdh-num serif">{cronoFeitos}<span className="cdh-of">/{cronoMes.length}</span></span>
+                <span className="cdh-lbl">{cronoFeitos === cronoMes.length ? "tudo concluído este mês 🎉" : "tarefas concluídas em " + nomeMes}</span>
+              </div>
+              <Progress value={cronoFeitos} max={cronoMes.length} tone="good" />
+              <ul className="crono-dash-list">
+                {cronoMes.slice(0, 6).map((i) =>
+              <li key={i.id} className={"cdl-item" + (i.feito ? " feito" : "")}>
+                    <span className={"cdl-check" + (i.feito ? " on" : "")}>{i.feito ? "✓" : ""}</span>
+                    <span className="cdl-text">{i.titulo || "Tarefa sem título"}</span>
+                  </li>
+              )}
+                {cronoMes.length > 6 &&
+              <li className="cdl-more" onClick={() => go("cronograma")}>+ {cronoMes.length - 6} tarefa(s) — ver todas</li>}
+              </ul>
             </div>
-          </div>
-          <div className="budget-mes">
-            <span className="bm-num serif">{pagamentosMes}</span>
-            <span className="bm-txt">{pagamentosMes === 1 ? "pagamento previsto" : "pagamentos previstos"} para {nomeMes}{valorMes > 0 ? <span className="bm-val"> · {brl(valorMes)}</span> : null}</span>
-          </div>
+          }
         </Card>
 
         <Card className="pad">
@@ -175,21 +197,6 @@ function Dashboard({ go, tasks }) {
               <div className="dcb-sub">confirmados{rsvpRecusados > 0 ? " · " + rsvpRecusados + " recusaram" : ""}</div>
             </div>
           </div>
-        </div>
-      </Card>
-
-      {/* decisions strip */}
-      <Card className="pad">
-        <SectionTitle kicker="DECISÕES EM ABERTO" title="Fornecedores para escolher" action={<button className="link-btn" onClick={() => go("fornecedores")}>Ver comparativo</button>} />
-        <div className="decision-strip">
-          {decidir.map((f) =>
-          <div key={f.id} className="decision-card" onClick={() => go("fornecedores")}>
-              <div className="dc-cat">{(CATS.find((c) => c.id === f.categoria) || {}).nome}</div>
-              <div className="dc-name serif">{f.nome}</div>
-              <div className="dc-row"><Stars score={f.scores.qualidade} /><span className="dc-price">{brl(f.preco)}</span></div>
-              <Badge status={f.status} />
-            </div>
-          )}
         </div>
       </Card>
 

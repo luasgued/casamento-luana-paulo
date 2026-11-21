@@ -198,6 +198,13 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
   const [cell, setCell] = React.useState(null); // {id, mes}
   const [val, setVal] = React.useState("");
 
+  // mês vigente (real) — destacado e já posicionado na rolagem
+  const agora = new Date();
+  const nowKey = agora.getFullYear() + "-" + String(agora.getMonth() + 1).padStart(2, "0");
+  const scrollRef = React.useRef(null);
+  const tableRef = React.useRef(null);
+  const nowThRef = React.useRef(null);
+
   const totalItem = (c) => meses.reduce((s, m) => s + (+(c.pagamentos || {})[m.key] || 0), 0);
   const totalMes = (mk) => fechados.reduce((s, c) => s + (+(c.pagamentos || {})[mk] || 0), 0);
   const totalGeral = fechados.reduce((s, c) => s + totalItem(c), 0);
@@ -223,6 +230,26 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
   const anos = [];
   meses.forEach((m) => {const a = anos.find((x) => x.ano === m.ano);if (a) a.span++;else anos.push({ ano: m.ano, span: 1 });});
 
+  // mede a largura real das colunas fixas (item + valor total + ações) e
+  // posiciona a rolagem no mês vigente
+  React.useLayoutEffect(() => {
+    const t = tableRef.current,sc = scrollRef.current;
+    if (!t) return;
+    const itemTh = t.querySelector("th.cash-item");
+    const totalTh = t.querySelector("th.cash-total");
+    const actsTh = t.querySelector("th.cash-acts");
+    if (!itemTh || !totalTh || !actsTh) return;
+    const w1 = itemTh.offsetWidth,w2 = totalTh.offsetWidth,w3 = actsTh.offsetWidth;
+    t.style.setProperty("--sl2", w1 + "px");
+    t.style.setProperty("--sl3", w1 + w2 + "px");
+    const el = nowThRef.current;
+    if (el && sc) {
+      const er = el.getBoundingClientRect(),sr = sc.getBoundingClientRect();
+      const delta = er.left - sr.left - (w1 + w2 + w3) - 16;
+      if (delta > 0) sc.scrollLeft += delta;
+    }
+  }, [fechados.length]);
+
   return (
     <Card className="pad">
       <div className="orc-bar">
@@ -233,17 +260,17 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
       {fechados.length === 0 ?
       <div className="orc-empty">Nenhum item contratado ainda. Marque um item como <b>Contratado</b> na aba anterior, ou adicione um item fechado aqui.</div> :
 
-      <div className="orc-scroll">
-          <table className="cash">
+      <div className="orc-scroll" ref={scrollRef}>
+          <table className="cash" ref={tableRef}>
             <thead>
               <tr className="cash-years">
                 <th className="cash-item sticky-l" rowSpan="2">ITEM</th>
-                <th className="cash-total num" rowSpan="2">Valor total</th>
-                <th className="cash-acts" rowSpan="2"></th>
+                <th className="cash-total num sticky-l" rowSpan="2">Valor total</th>
+                <th className="cash-acts sticky-l" rowSpan="2"></th>
                 {anos.map((a) => <th key={a.ano} colSpan={a.span} className="cash-year">{a.ano}</th>)}
               </tr>
               <tr className="cash-months">
-                {meses.map((m) => <th key={m.key} className="cash-m num">{m.mes}</th>)}
+                {meses.map((m) => <th key={m.key} ref={m.key === nowKey ? nowThRef : null} className={"cash-m num" + (m.key === nowKey ? " cash-now" : "")}>{m.mes}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -258,15 +285,15 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
                       </span>
                     </span>
                   </td>
-                  <td className="cash-total num serif">{brl(totalItem(c))}</td>
-                  <td className="cash-acts">
+                  <td className="cash-total num serif sticky-l">{brl(totalItem(c))}</td>
+                  <td className="cash-acts sticky-l">
                     <RowActions onEdit={() => onEditItem({ ...c })} onDelete={() => onDelete(c.id)} />
                   </td>
                   {meses.map((m) => {
                 const v = (c.pagamentos || {})[m.key];
                 const isEd = cell && cell.id === c.id && cell.mes === m.key;
                 return (
-                  <td key={m.key} className={"cash-cell num" + (v ? " has" : "")}>
+                  <td key={m.key} className={"cash-cell num" + (v ? " has" : "") + (m.key === nowKey ? " cash-now" : "")}>
                         {isEd ?
                     <input autoFocus className="cash-input" type="number" value={val}
                     onChange={(e) => setVal(e.target.value)} onBlur={commit}
@@ -281,11 +308,11 @@ function AbaFinal({ linhas, setLinhas, onEditItem, onDelete, onAdd }) {
             )}
               <tr className="cash-foot">
                 <td className="cash-item sticky-l">Total · {fechados.length} itens</td>
-                <td className="cash-total num serif">{brl(totalGeral)}</td>
-                <td className="cash-acts"></td>
+                <td className="cash-total num serif sticky-l">{brl(totalGeral)}</td>
+                <td className="cash-acts sticky-l"></td>
                 {meses.map((m) => {
                 const t = totalMes(m.key);
-                return <td key={m.key} className={"cash-cell num" + (t ? " has" : "")}>{t ? brlShort(t) : ""}</td>;
+                return <td key={m.key} className={"cash-cell num" + (t ? " has" : "") + (m.key === nowKey ? " cash-now" : "")}>{t ? brlShort(t) : ""}</td>;
               })}
               </tr>
             </tbody>

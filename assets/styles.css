@@ -207,6 +207,24 @@ button{ font-family:inherit; cursor:pointer; }
 .bm-txt{ font-size:13px; color:var(--muted); }
 .bm-val{ color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
 
+/* ---------- cronograma na home ---------- */
+.crono-dash{ display:flex; flex-direction:column; gap:12px; }
+.crono-dash-head{ display:flex; align-items:baseline; gap:10px; }
+.cdh-num{ font-size:30px; line-height:1; color:var(--good); flex:none; }
+.cdh-of{ font-size:18px; color:var(--faint); }
+.cdh-lbl{ font-size:13px; color:var(--muted); }
+.crono-dash-list{ list-style:none; margin:4px 0 0; padding:0; }
+.cdl-item{ display:flex; align-items:center; gap:11px; padding:9px 2px; border-bottom:1px solid var(--line); font-size:14px; }
+.cdl-item:last-child{ border-bottom:none; }
+.cdl-check{ width:19px; height:19px; flex-shrink:0; border:1.5px solid var(--line-strong); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; }
+.cdl-check.on{ background:var(--good); border-color:var(--good); }
+.cdl-text{ flex:1; }
+.cdl-item.feito .cdl-text{ color:var(--faint); text-decoration:line-through; }
+.cdl-more{ padding:9px 2px; font-size:12.5px; color:var(--accent); cursor:pointer; }
+.cdl-more:hover{ text-decoration:underline; }
+.crono-empty-dash{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:14px 0; color:var(--muted); font-size:13.5px; }
+.ced-ico{ font-size:26px; }
+
 /* ---------- tasks ---------- */
 .tasks{ list-style:none; margin:0; padding:0; }
 .task{ display:flex; align-items:center; gap:13px; padding:13px 4px; border-bottom:1px solid var(--line); cursor:pointer; transition:padding .15s; }
@@ -379,6 +397,16 @@ button{ font-family:inherit; cursor:pointer; }
 .cash-foot .sticky-l{ background:var(--surface); }
 .cash-foot:hover td,.cash-foot:hover .sticky-l{ background:var(--surface) !important; }
 .cash-foot .cash-cell.has{ color:var(--accent); }
+/* colunas fixas: item + valor total + ações permanecem na rolagem lateral */
+.cash-item{ width:210px; }
+.cash-total{ width:124px; }
+.cash-total.sticky-l{ left:var(--sl2,210px); }
+.cash-acts.sticky-l{ left:var(--sl3,334px); }
+/* mês vigente — linha vertical de destaque na coluna inteira */
+.cash th.cash-now,.cash td.cash-now{ border-left:2px solid var(--accent); background:color-mix(in oklab, var(--accent) 6%, var(--surface)); }
+.cash thead th.cash-now{ color:var(--accent); }
+.cash tbody tr:hover td.cash-now{ background:color-mix(in oklab, var(--accent) 11%, var(--surface)); }
+.cash-foot td.cash-now{ background:color-mix(in oklab, var(--accent) 6%, var(--surface)) !important; }
 .orc-empty{ text-align:center; padding:44px 24px; color:var(--muted); font-size:14px; line-height:1.6; }
 
 /* card de item */
@@ -867,11 +895,13 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 .cr-ano{ color:var(--muted,#8a8a8a); font-weight:400; }
 .cr-sub{ font-size:12px; color:var(--accent,#1b47a4); margin-top:3px; }
 
-.cr-layout{ display:grid; grid-template-columns:minmax(290px,1fr) 1.1fr; gap:30px; align-items:start; }
+.cr-layout{ display:grid; grid-template-columns:minmax(280px,380px) minmax(0,1fr); gap:30px; align-items:start; }
+.cr-cal{ min-width:0; }
+.cr-list{ min-width:0; }
 .cr-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:6px; }
 .cr-week span{ text-align:center; font-size:10.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--faint,#b0b0b0); }
 .cr-days{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
-.cr-day{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; position:relative; border-radius:9px; font-size:13px; color:var(--ink,#222); background:var(--surface-2,rgba(0,0,0,0.04)); }
+.cr-day{ aspect-ratio:1; min-width:0; display:flex; align-items:center; justify-content:center; position:relative; border-radius:9px; font-size:13px; color:var(--ink,#222); background:var(--surface-2,rgba(0,0,0,0.04)); }
 .cr-day.empty{ background:transparent; }
 .cr-day.hoje{ background:var(--accent,#1b47a4); color:#fff; font-weight:700; }
 .cr-day.casamento{ background:rgba(214,58,78,0.14); color:#c02a3c; font-weight:700; }

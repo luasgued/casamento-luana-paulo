@@ -59,6 +59,8 @@ function Orcamento() {
   filter((c) => c.status === "contratado").
   reduce((s, c) => s + (+c.realizado || 0 || +c.previsto || 0), 0);
   const saldoTeto = tetoTotal - contratadoComprometido;
+  // saldo entre o que já foi gasto (real) e o orçamento total
+  const saldoReal = tetoTotal - totalReal;
 
   // comprometimento futuro: itens ainda não fechados
   const emCotacao = linhas.filter((c) => c.status === "cotando").reduce((s, c) => s + (+c.previsto || 0), 0);
@@ -131,10 +133,10 @@ function Orcamento() {
           <div className="orc-prevbar"><div className="orc-prevbar-fill" style={{ width: Math.min(100, tetoTotal ? totalReal / tetoTotal * 100 : 0) + "%" }} /></div>
           <div className="stat-sub">{tetoTotal ? Math.round(totalReal / tetoTotal * 100) : 0}% do orçamento já gasto</div>
         </Card>
-        <Card className={"pad orc-sum-card highlight " + (saldoTeto >= 0 ? "tone-good" : "tone-off")}>
-          <div className="stat-label">{saldoTeto >= 0 ? "Saldo disponível" : "Acima do teto"}</div>
-          <div className="orc-big serif">{(saldoTeto < 0 ? "−" : "") + brl(Math.abs(saldoTeto))}</div>
-          <div className="stat-sub">{brl(contratadoComprometido)} já contratados de {brl(tetoTotal)}</div>
+        <Card className={"pad orc-sum-card highlight " + (saldoReal >= 0 ? "tone-good" : "tone-off")}>
+          <div className="stat-label">{saldoReal >= 0 ? "Saldo disponível" : "Acima do orçamento"}</div>
+          <div className="orc-big serif">{(saldoReal < 0 ? "−" : "") + brl(Math.abs(saldoReal))}</div>
+          <div className="stat-sub">{brl(totalReal)} gastos de {brl(tetoTotal)}</div>
         </Card>
       </div>
 

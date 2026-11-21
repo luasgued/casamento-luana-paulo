@@ -92,34 +92,6 @@ function Orcamento() {
     <div className="screen">
       <SectionTitle kicker="FINANÇAS" title="Orçamento" />
 
-      {/* comprometimento do orçamento — visão principal */}
-      <Card className="pad orc-alloc">
-        <div className="alloc-head">
-          <div>
-            <div className="kicker">COMPROMETIMENTO DO ORÇAMENTO</div>
-            <div className="alloc-title serif">{Math.round(projetado / tetoTotal * 100)}% do teto projetado</div>
-          </div>
-          <div className="alloc-teto">
-            <div className="alloc-teto-v serif">{brl(projetado)}<span> / {brl(tetoTotal)}</span></div>
-            <div className="alloc-teto-l">{acima > 0 ? brl(acima) + " acima do teto" : brl(livre) + " ainda livres"}</div>
-          </div>
-        </div>
-        <div className="alloc-bar">
-          {alloc.map((a) => a.v > 0 &&
-          <div key={a.k} className={"alloc-seg " + a.cls} style={{ width: pct(a.v) }} title={a.k + ": " + brl(a.v)} />
-          )}
-        </div>
-        <div className="alloc-legend">
-          {alloc.map((a) =>
-          <div key={a.k} className="alloc-leg-item">
-              <span className={"alloc-dot " + a.cls} />
-              <span className="alloc-leg-k">{a.k}</span>
-              <span className="alloc-leg-v">{brl(a.v)}</span>
-            </div>
-          )}
-        </div>
-      </Card>
-
       {/* totalizadores — secundários, compactos */}
       <div className="orc-summary">
         <Card className="pad orc-sum-card">

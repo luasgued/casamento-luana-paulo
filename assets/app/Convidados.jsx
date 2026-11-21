@@ -30,6 +30,12 @@ function Convidados() {
   const sdEnviados = lista.filter((g) => g.saveTheDateEnviado).length;
   const convEnviados = lista.filter((g) => g.conviteEnviado).length;
   const rsvpConfirmados = lista.filter((g) => g.rsvp === "confirmado").length;
+  // convidados principais (não são subconvidados), desconsiderando padrinhos e noivos
+  const ehNoivoOuPadrinho = (g) => {
+    const grp = (g.grupo || "").toLowerCase().trim();
+    return grp === "padrinhos" || grp === "padrinho" || grp === "noivos" || grp === "noivo" || grp === "noiva" || grp === "casal";
+  };
+  const totalPrincipais = lista.filter((g) => !g.principalId && !ehNoivoOuPadrinho(g)).length;
   // nome do convidado principal por id (para mostrar o vínculo)
   const nomePorId = {};
   lista.forEach((g) => { nomePorId[g.id] = g.nome; });
@@ -167,11 +173,16 @@ function Convidados() {
       ) : (
       <React.Fragment>
       {/* totalizer */}
-      <div className="orc-summary">
+      <div className="conv-summary">
         <Card className="pad orc-sum-card">
           <div className="stat-label">Convidados</div>
           <div className="orc-big serif">{totalAdultos}</div>
           <div className="stat-sub">adultos na lista{totalCriancas > 0 ? " · " + totalCriancas + " criança(s)" : ""}</div>
+        </Card>
+        <Card className="pad orc-sum-card">
+          <div className="stat-label">Convidados principais</div>
+          <div className="orc-big serif">{totalPrincipais}</div>
+          <div className="stat-sub">sem padrinhos e noivos</div>
         </Card>
         <Card className="pad orc-sum-card">
           <div className="stat-label">Por anfitrião</div>

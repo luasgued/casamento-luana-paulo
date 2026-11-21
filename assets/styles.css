@@ -815,3 +815,8 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 .combo-selected{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .combo-chip{ font-size:14px; font-weight:600; color:var(--accent,#1b47a4); background:var(--accent-soft,rgba(27,71,164,0.1)); padding:8px 14px; border-radius:9px; }
 .field-hint{ font-size:11.5px; color:var(--muted,#8a8a8a); margin-top:6px; }
+
+/* ===== Totalizadores dos convidados (4 cards responsivos) ===== */
+.conv-summary{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--gap); }
+@media (max-width:980px){ .conv-summary{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .conv-summary{ grid-template-columns:1fr; } }

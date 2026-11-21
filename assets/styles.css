@@ -898,10 +898,10 @@ textarea.f-input{ resize:vertical; line-height:1.5; }
 .cr-layout{ display:grid; grid-template-columns:minmax(280px,380px) minmax(0,1fr); gap:30px; align-items:start; }
 .cr-cal{ min-width:0; }
 .cr-list{ min-width:0; }
-.cr-week{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:6px; }
+.cr-week{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin-bottom:6px; }
 .cr-week span{ text-align:center; font-size:10.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--faint,#b0b0b0); }
-.cr-days{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
-.cr-day{ aspect-ratio:1; min-width:0; display:flex; align-items:center; justify-content:center; position:relative; border-radius:9px; font-size:13px; color:var(--ink,#222); background:var(--surface-2,rgba(0,0,0,0.04)); }
+.cr-days{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+.cr-day{ min-width:0; height:48px; display:flex; align-items:center; justify-content:center; position:relative; border-radius:9px; font-size:13px; color:var(--ink,#222); background:var(--surface-2,rgba(0,0,0,0.04)); }
 .cr-day.empty{ background:transparent; }
 .cr-day.hoje{ background:var(--accent,#1b47a4); color:#fff; font-weight:700; }
 .cr-day.casamento{ background:rgba(214,58,78,0.14); color:#c02a3c; font-weight:700; }

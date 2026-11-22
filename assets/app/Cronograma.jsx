@@ -1,23 +1,26 @@
 // Cronograma.jsx — calendário mês a mês (2 anos antes do casamento) com uma
 // lista de tarefas por mês + eventos por data (clique em um dia para cadastrar).
-// Tudo fica no banco compartilhado (useStore).
+// Um evento tem nome e período (1 ou mais dias). Tudo no banco compartilhado.
 const CR_MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const CR_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
-// tipos de evento com cores (o último, "outro", é o padrão de fallback)
-const CR_TIPOS = [
-  { id: "casamento", label: "Dia do casamento", cor: "#c02a3c" },
-  { id: "prewedding", label: "Pré-wedding", cor: "#1b47a4" },
-  { id: "maquiagem", label: "Teste de maquiagem", cor: "#c23f93" },
-  { id: "vestido", label: "Prova de vestido", cor: "#7a3cc0" },
-  { id: "degustacao", label: "Degustação", cor: "#c07a1b" },
-  { id: "reuniao", label: "Reunião / Visita", cor: "#1b8f6a" },
-  { id: "outro", label: "Outro", cor: "#6b7280" },
-];
-const crTipo = (id) => CR_TIPOS.find((t) => t.id === id) || CR_TIPOS[CR_TIPOS.length - 1];
-const crCor = (id) => crTipo(id).cor;
-const crLabel = (id) => crTipo(id).label;
 const pad2 = (n) => String(n).padStart(2, "0");
+
+// soma n dias a uma data "AAAA-MM-DD" (em UTC, sem susto de fuso)
+function isoAdd(iso, n) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.getUTCFullYear() + "-" + pad2(dt.getUTCMonth() + 1) + "-" + pad2(dt.getUTCDate());
+}
+// diferença em dias entre duas datas "AAAA-MM-DD"
+function isoDiff(a, b) {
+  const [ya, ma, da] = a.split("-").map(Number);
+  const [yb, mb, db] = b.split("-").map(Number);
+  return Math.round((Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da)) / 86400000);
+}
+// início/fim tolerantes a eventos antigos (que só tinham "data")
+const evIni = (e) => e.inicio || e.data;
+const evFim = (e) => e.fim || e.inicio || e.data;
 
 function Cronograma() {
   const [itens, setItens] = useStore("cronograma", []);
@@ -59,12 +62,29 @@ function Cronograma() {
   const updItem = (id, patch) => setItens((ls) => ls.map((i) => i.id === id ? Object.assign({}, i, patch) : i));
   const delItem = (id) => setItens((ls) => ls.filter((i) => i.id !== id));
 
-  // eventos (por data)
-  const eventosDoDia = (d) => d ? eventos.filter((e) => e.data === diaKey(d)) : [];
-  const eventosDoMes = eventos.filter((e) => e.data.slice(0, 7) === mesKey).sort((a, b) => a.data.localeCompare(b.data));
-  const addEvento = (data) => setEventos((ls) => [...ls, { id: "ev" + Date.now(), data, titulo: "", tipo: data === diaKey(diaCasamento) ? "casamento" : "prewedding" }]);
+  // eventos (por período)
+  const eventosDoDia = (d) => {
+    if (!d) return [];
+    const k = diaKey(d);
+    return eventos.filter((e) => k >= evIni(e) && k <= evFim(e));
+  };
+  const firstKey = diaKey(1), lastKey = diaKey(diasNoMes);
+  const eventosDoMes = eventos
+    .filter((e) => evFim(e) >= firstKey && evIni(e) <= lastKey)
+    .sort((a, b) => evIni(a).localeCompare(evIni(b)));
+  const addEvento = (data) => setEventos((ls) => [...ls, { id: "ev" + Date.now(), inicio: data, fim: data, titulo: "" }]);
   const updEvento = (id, patch) => setEventos((ls) => ls.map((e) => e.id === id ? Object.assign({}, e, patch) : e));
   const delEvento = (id) => setEventos((ls) => ls.filter((e) => e.id !== id));
+
+  // rótulo do período de um evento (ex.: "15 de Novembro" ou "15–16 de Novembro")
+  const rangeLabel = (e) => {
+    const ini = evIni(e), fim = evFim(e);
+    const [y1, m1, d1] = ini.split("-").map(Number);
+    const [y2, m2, d2] = fim.split("-").map(Number);
+    if (ini === fim) return d1 + " de " + CR_MESES[m1 - 1];
+    if (y1 === y2 && m1 === m2) return d1 + "–" + d2 + " de " + CR_MESES[m1 - 1];
+    return d1 + " " + CR_MESES[m1 - 1].slice(0, 3) + " – " + d2 + " " + CR_MESES[m2 - 1].slice(0, 3);
+  };
 
   return (
     <div className="screen">
@@ -91,14 +111,14 @@ function Cronograma() {
                 const evs = eventosDoDia(d);
                 return (
                   <div key={i}
-                    className={"cr-day" + (d ? " clickable" : " empty") + (ehHoje(d) ? " hoje" : "") + (d && d === diaCasamento ? " casamento" : "")}
+                    className={"cr-day" + (d ? " clickable" : " empty") + (ehHoje(d) ? " hoje" : "") + (d && d === diaCasamento ? " casamento" : "") + (evs.length ? " tem-evento" : "")}
                     onClick={d ? () => setModalData(diaKey(d)) : undefined}
-                    title={d ? "Clique para cadastrar um evento" : undefined}>
+                    title={d ? (evs.length ? evs.map((e) => e.titulo || "Evento").join(" · ") : "Clique para cadastrar um evento") : undefined}>
                     {d ? <span className="cr-day-n">{d}</span> : null}
                     {d && d === diaCasamento ? <span className="cr-day-mark">💍</span> : null}
                     {evs.length > 0 &&
                       <span className="cr-day-dots">
-                        {evs.slice(0, 3).map((e) => <span key={e.id} className="cr-day-dot" style={{ background: crCor(e.tipo) }} />)}
+                        {evs.slice(0, 3).map((e) => <span key={e.id} className="cr-day-dot" />)}
                       </span>}
                   </div>);
               })}
@@ -114,13 +134,13 @@ function Cronograma() {
             </div>
             <div className="cr-ev-month">
               {eventosDoMes.length === 0 ?
-                <div className="cr-ev-empty">Nenhum evento neste mês. Clique em um dia do calendário para cadastrar (pré-wedding, teste de maquiagem, dia do casamento…).</div> :
+                <div className="cr-ev-empty">Nenhum evento neste mês. Clique em um dia do calendário para cadastrar (ex.: pré-wedding, teste de maquiagem, dia do casamento…).</div> :
                 eventosDoMes.map((e) =>
-                  <button key={e.id} className="cr-ev-month-item" onClick={() => setModalData(e.data)}>
-                    <span className="cr-ev-daybox" style={{ borderColor: crCor(e.tipo) }}><span className="cr-ev-dnum">{Number(e.data.slice(8, 10))}</span></span>
+                  <button key={e.id} className="cr-ev-month-item" onClick={() => setModalData(evIni(e))}>
+                    <span className="cr-ev-daybox"><span className="cr-ev-dnum">{Number(evIni(e).slice(8, 10))}</span></span>
                     <span className="cr-ev-info">
-                      <span className="cr-ev-ititle">{e.titulo || crLabel(e.tipo)}</span>
-                      <span className="cr-ev-itype"><span className="cr-ev-dot" style={{ background: crCor(e.tipo) }} />{crLabel(e.tipo)}</span>
+                      <span className="cr-ev-ititle">{e.titulo || "Evento sem nome"}</span>
+                      <span className="cr-ev-itype">{rangeLabel(e)}{evIni(e) !== evFim(e) ? " · " + (isoDiff(evIni(e), evFim(e)) + 1) + " dias" : ""}</span>
                     </span>
                   </button>)}
             </div>
@@ -147,7 +167,7 @@ function Cronograma() {
       {modalData &&
         <CrEventModal
           data={modalData}
-          eventos={eventos.filter((e) => e.data === modalData)}
+          eventos={eventos.filter((e) => modalData >= evIni(e) && modalData <= evFim(e))}
           onAdd={() => addEvento(modalData)}
           onUpd={updEvento}
           onDel={delEvento}
@@ -159,6 +179,7 @@ function Cronograma() {
 function CrEventModal({ data, eventos, onAdd, onUpd, onDel, onClose }) {
   const [y, m, d] = data.split("-").map(Number);
   const dataFmt = d + " de " + CR_MESES[m - 1] + " de " + y;
+  const fmtDM = (iso) => iso.split("-")[2] + "/" + iso.split("-")[1];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -175,20 +196,30 @@ function CrEventModal({ data, eventos, onAdd, onUpd, onDel, onClose }) {
           {eventos.length === 0 &&
             <div className="cr-ev-empty">Nenhum evento neste dia ainda. Adicione o primeiro abaixo.</div>}
 
-          {eventos.map((e, i) =>
-            <div key={e.id} className="cr-ev-row">
-              <span className="cr-ev-dot" style={{ background: crCor(e.tipo) }} />
-              <select className="f-input cr-ev-sel" value={e.tipo} onChange={(ev) => onUpd(e.id, { tipo: ev.target.value })}>
-                {CR_TIPOS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </select>
-              <input className="f-input" value={e.titulo} autoFocus={i === eventos.length - 1 && !e.titulo}
-                onChange={(ev) => onUpd(e.id, { titulo: ev.target.value })}
-                placeholder={crLabel(e.tipo) + " (toque para renomear)"} />
-              <button className="srv-del" title="Remover evento" onClick={() => onDel(e.id)}>✕</button>
-            </div>)}
+          {eventos.map((e, idx) => {
+            const ini = evIni(e), fim = evFim(e);
+            const dur = isoDiff(ini, fim) + 1;
+            const setDur = (k) => onUpd(e.id, { inicio: ini, fim: isoAdd(ini, Math.max(1, k) - 1) });
+            return (
+              <div key={e.id} className="cr-ev-block">
+                <div className="cr-ev-row">
+                  <input className="f-input" value={e.titulo} autoFocus={idx === eventos.length - 1 && !e.titulo}
+                    onChange={(ev) => onUpd(e.id, { titulo: ev.target.value })}
+                    placeholder="Nome do evento (ex.: Teste de maquiagem)" />
+                  <div className="cr-dur" title="Duração em dias">
+                    <button className="cr-dur-btn" disabled={dur <= 1} onClick={() => setDur(dur - 1)}>−</button>
+                    <span className="cr-dur-n">{dur} {dur === 1 ? "dia" : "dias"}</span>
+                    <button className="cr-dur-btn" onClick={() => setDur(dur + 1)}>+</button>
+                  </div>
+                  <button className="srv-del" title="Remover evento" onClick={() => onDel(e.id)}>✕</button>
+                </div>
+                {ini !== fim &&
+                  <div className="cr-ev-range">De {fmtDM(ini)} até {fmtDM(fim)}</div>}
+              </div>);
+          })}
 
           <button className="srv-add" onClick={onAdd}>+ Adicionar evento</button>
-          <div className="cr-ev-hint">Escolha um tipo para a cor e, se quiser, dê um nome ao evento.</div>
+          <div className="cr-ev-hint">Dê um nome ao evento e, se durar mais de um dia, aumente a duração em “+”.</div>
         </div>
 
         <div className="modal-foot">
